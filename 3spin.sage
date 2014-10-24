@@ -1,11 +1,17 @@
+def A_list(n):
+  return factorial(6*n)/(factorial(3*n)*factorial(2*n))
+
+def B_list(n):
+  return factorial(6*n+1)/((6*n-1)*factorial(3*n)*factorial(2*n))
+
 def C_coeff(m,term):
   n = term - floor(m/3)
   if n < 0:
     return 0
   if (m % 3) == 0:
-    return A_list[n]
+    return capply(A_list,n)
   else:
-    return B_list[n]
+    return capply(B_list,n)
 
 def dual_C_coeff(i,j,parity):
   total = 0
