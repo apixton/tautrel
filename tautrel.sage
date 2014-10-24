@@ -30,3 +30,6 @@ attach "strata_operations.sage"
 
 # code to find new relations inside the 3-spin relations
 attach "primitive.sage"
+
+# some tests
+attach "tests.sage"
