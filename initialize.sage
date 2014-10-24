@@ -1,4 +1,5 @@
 if 'initialized' not in globals():
+  import time
   R.<X> = PolynomialRing(ZZ,1,order='lex')
   A_list = [factorial(6*n)/(factorial(3*n)*factorial(2*n)) for n in range(100)]
   B_list = [factorial(6*n+1)/((6*n-1)*factorial(3*n)*factorial(2*n)) for n in range(100)]
