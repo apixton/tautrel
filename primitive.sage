@@ -228,3 +228,24 @@ def derived_rels(g,r,n=0,moduli_type=MODULI_ST):
   answer = remove_duplicates2(answer)
   dprint("End derived (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   return answer
+
+def list_num_new_rels(moduli_type=MODULI_ST):
+  data = {}
+  for key in cache_dict.keys():
+    if key[0] == 'choose_basic_rels' and key[1][3] == moduli_type:
+      data[tuple(list(key[1])[:3])] = len(cache_dict[key])
+  key_list = data.keys()
+  key_list.sort()
+  for key in key_list:
+    print "%s: %s" % (key, data[key])
+
+def new_rel_locs(moduli_type=MODULI_ST):
+  data = {}
+  for key in cache_dict.keys():
+    if key[0] == 'choose_basic_rels' and key[1][3] == moduli_type:
+      data[tuple(list(key[1])[:3])] = len(cache_dict[key])
+  key_list = data.keys()
+  key_list.sort()
+  for key in key_list:
+    if data[key] > 0:
+      print "%s: %s" % (key, data[key])
