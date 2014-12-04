@@ -17,7 +17,7 @@ def compute_betti(g,r,n=0,moduli_type=MODULI_ST):
   id_string = "betti-%s-%s-%s-%s" % (mod_type_string(moduli_type),g,r,n)
   start_time = time.time()
   start_memory = floor(get_memory_usage())
-  dsave("compute/%s-START",id_string)
+  #dsave("compute/%s-START",id_string)
   ans = betti(g,r,tuple([1 for i in range(n)]),moduli_type)
   end_time = time.time()
   end_memory = floor(get_memory_usage())
