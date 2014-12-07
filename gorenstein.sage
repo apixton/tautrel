@@ -528,3 +528,70 @@ def goren_rels(g,r,markings=(),moduli_type=MODULI_ST):
   S2 = capply(good_generator_list,g,r2,markings,moduli_type)
   M = pairing_submatrix(S1,S2,g,r,markings,moduli_type)
   return Matrix(M).kernel().basis()
+
+##### some crude parallelization:
+
+@parallel
+def para_pairing_dict(S1,S2,g,r1,markings=(),moduli_type=MODULI_ST):
+  D = {}
+  r3 = dim_form(g,len(markings),moduli_type)
+  r2 = r3-r1
+  ngens3 = num_strata(g,r3,markings,moduli_type)
+  socle_evaluations = [capply(socle_evaluation,i,g,markings,moduli_type) for i in range(ngens3)]
+  for i1 in S1:
+    for i2 in S2:
+      L = capply(multiply,r1,i1,r2,i2,g,r3,markings,moduli_type)
+      D[i1,i2] = sum([L[k]*socle_evaluations[k] for k in range(ngens3)])
+  return D
+
+def para_gorenstein(g,r1,markings=(),moduli_type=MODULI_ST):
+  r3 = dim_form(g,len(markings),moduli_type)
+  r2 = r3-r1
+  # precompute stuff
+  D = capply(all_strata,g,r1,markings,moduli_type)
+  D = capply(all_strata,g,r2,markings,moduli_type)
+  D = capply(all_strata,g,r3,markings,moduli_type)
+  for r in range(r3+1):
+    D = capply(all_pure_strata,g,r,markings,moduli_type)
+    for num in range(num_pure_strata(g,r,markings,moduli_type)):
+      D = capply(pure_strata_autom_count,num,g,r,markings,moduli_type)
+  D = capply(contraction_table,g,r3,markings,moduli_type)
+  D = capply(unpurify_map,g,r3,markings,moduli_type)
+  ngens3 = num_strata(g,r3,markings,moduli_type)
+  for i in range(ngens3):
+    D = capply(socle_evaluation,i,g,markings,moduli_type)
+  # probably should do more stuff here
+
+  # choose good generators
+  S1 = capply(good_generator_list,g,r1,markings,moduli_type)
+  S2 = capply(good_generator_list,g,r2,markings,moduli_type)
+
+  # more precomputing
+  for i1 in S1:
+    D = capply(automorphism_cosets,i1,g,r1,markings,moduli_type)
+  for i2 in S2:
+    D = capply(automorphism_cosets,i2,g,r2,markings,moduli_type)
+
+  # chop generator lists into blocks
+  a1 = len(S1)
+  a2 = len(S2)
+  k1 = min(a1,10)
+  k2 = min(a2,10)
+  S1list = [S1[floor(i*a1/k1):floor((i+1)*a1/k1)] for i in range(k1)]
+  S2list = [S2[floor(i*a2/k2):floor((i+1)*a2/k2)] for i in range(k2)]
+  input_list = []
+  for T1 in S1list:
+    for T2 in S2list:
+      input_list.append((T1,T2,g,r1,markings,moduli_type))
+  result_list = list(para_pairing_dict(input_list))
+  result_dict = {}
+  for res in result_list:
+    result_dict.update(res[1])
+
+  M = [[0 for i2 in S2] for i1 in S1]
+  for i1 in range(len(S1)):
+    for i2 in range(len(S2)):
+      M[i1][i2] = result_dict[S1[i1],S2[i2]]
+
+  # compute rank; maybe should do this in a different way at some point.
+  return matrix(M).rank()
