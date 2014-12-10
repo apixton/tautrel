@@ -85,7 +85,7 @@ def multiply(r1,i1,r2,i2,g,rmax,markings=(),moduli_type=MODULI_ST):
   if not found:
     print "ERROR! Purification failed."
   if G1_key > G2_key:
-    return capply(multiply,r2,i2,r1,i1,g,rmax,markings,moduli_type)
+    return multiply(r2,i2,r1,i1,g,rmax,markings,moduli_type)
 
   if not contraction_dict.has_key((G1_key,G2_key)):
     return answer
@@ -540,7 +540,7 @@ def para_pairing_dict(S1,S2,g,r1,markings=(),moduli_type=MODULI_ST):
   socle_evaluations = [capply(socle_evaluation,i,g,markings,moduli_type) for i in range(ngens3)]
   for i1 in S1:
     for i2 in S2:
-      L = capply(multiply,r1,i1,r2,i2,g,r3,markings,moduli_type)
+      L = multiply(r1,i1,r2,i2,g,r3,markings,moduli_type)
       D[i1,i2] = sum([L[k]*socle_evaluations[k] for k in range(ngens3)])
   return D
 
