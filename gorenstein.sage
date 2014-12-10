@@ -53,6 +53,155 @@ def contraction_table(g,r,markings=(),moduli_type=MODULI_ST):
           contraction_dict[dict_key].append(dict_entry[:2] + [dict_entry[3],dict_entry[2],dict_entry[5],dict_entry[4]])
   return contraction_dict
 
+def compute_pairing(r1,i1,r2,i2,g,rmax,markings=(),moduli_type=MODULI_ST):
+  answer = 0
+  pure_strata = [capply(all_pure_strata,g,r,markings,moduli_type) for r in range(rmax+1)]
+  contraction_dict = capply(contraction_table,g,rmax,markings,moduli_type)
+  G1 = single_stratum(i1,g,r1,markings,moduli_type)
+  G2 = single_stratum(i2,g,r2,markings,moduli_type)
+  G1copy = Graph(G1.M)
+  G2copy = Graph(G2.M)
+  G1copy.purify()
+  G2copy.purify()
+  pure_r1 = G1copy.num_edges() - len(markings)
+  pure_r2 = G2copy.num_edges() - len(markings)
+  found = False
+  for i in range(len(pure_strata[pure_r1])):
+    if G1copy.M == pure_strata[pure_r1][i].M:
+      G1_key = (pure_r1, i)
+      found = True
+      break
+  if not found:
+    print "ERROR! Purification failed."
+  found = False
+  for i in range(len(pure_strata[pure_r2])):
+    if G2copy.M == pure_strata[pure_r2][i].M:
+      G2_key = (pure_r2, i)
+      found = True
+      break
+  if not found:
+    print "ERROR! Purification failed."
+  if G1_key > G2_key:
+    return compute_pairing(r2,i2,r1,i1,g,rmax,markings,moduli_type)
+
+  if not contraction_dict.has_key((G1_key,G2_key)):
+    return answer
+  for L in contraction_dict[(G1_key,G2_key)]:
+    H = pure_strata[L[0][0]][L[0][1]]
+    Hloops = []
+    if moduli_type > MODULI_CT:
+      for i in range(1,H.M.nrows()):
+        for j in range(1,H.M.ncols()):
+          if H.M[i,j][0] == 2:
+            Hloops.append((i,j))
+    auts = capply(pure_strata_autom_count,L[0][1],g,L[0][0],markings,moduli_type)
+    B = L[1]
+    if len(B) == pure_r1 and len(B) == pure_r2:
+      auts *= 2
+    aut_cosets1 = capply(automorphism_cosets,i1,g,r1,markings,moduli_type)
+    aut_cosets2 = capply(automorphism_cosets,i2,g,r2,markings,moduli_type)
+    auts /= aut_cosets1[0]*aut_cosets2[0]
+    for isom1 in aut_cosets1[1]:
+      for isom2 in aut_cosets2[1]:
+        Hcopy = Graph(H.M)
+        vmap1 = [0 for i in range(G1.M.nrows())]
+        for i in range(1,G1.M.nrows()):
+          vmap1[i] = L[2][0][L[4][0][isom1[0][i-1]-1]-1]
+        emap1 = [0 for i in range(G1.M.ncols())]
+        for i in range(1,G1.M.ncols()):
+          emap1[i] = L[2][1][L[4][1][isom1[1][i-1]-1]-1]
+        vmap2 = [0 for i in range(G2.M.nrows())]
+        for i in range(1,G2.M.nrows()):
+          vmap2[i] = L[3][0][L[5][0][isom2[0][i-1]-1]-1]
+        emap2 = [0 for i in range(G2.M.ncols())]
+        for i in range(1,G2.M.ncols()):
+          emap2[i] = L[3][1][L[5][1][isom2[1][i-1]-1]-1]
+
+        psilooplist = []
+        psiindexlist = []
+        loop_factor = 1
+        for i in range(1,G1.M.nrows()):
+          for j in range(1,G1.M.ncols()):
+            if G1.M[i,j][0] != 0:
+              if G1.M[i,j][0] == 1:
+                if G1.M[i,j][1] != 0:
+                  jj = emap1[j]
+                  for ii in vmap1[i]:
+                    if H.M[ii,jj] != 0:
+                      Hcopy.M[ii,jj] += G1.M[i,j][1]*X
+                      break
+              elif G1.M[i,j][1] == 0:
+                loop_factor *= 2
+              else:
+                jj = emap1[j]
+                psilooplist.append([[G1.M[i,j][1],G1.M[i,j][2]],[G1.M[i,j][2],G1.M[i,j][1]]])
+                psiindexlist.append([jj])
+                for ii in vmap1[i]:
+                  for k in range(H.M[ii,jj][0]):
+                    psiindexlist[-1].append(ii)
+        for i in range(1,G2.M.nrows()):
+          for j in range(1,G2.M.ncols()):
+            if G2.M[i,j][0] != 0:
+              if G2.M[i,j][0] == 1:
+                if G2.M[i,j][1] != 0:
+                  if G2.M[i,j][0] == 1:
+                    jj = emap2[j]
+                    for ii in vmap2[i]:
+                      if H.M[ii,jj] != 0:
+                        Hcopy.M[ii,jj] += G2.M[i,j][1]*X
+                        break
+              elif G2.M[i,j][1] == 0:
+                loop_factor *= 2
+              else:
+                jj = emap2[j]
+                psilooplist.append([[G2.M[i,j][1],G2.M[i,j][2]],[G2.M[i,j][2],G2.M[i,j][1]]])
+                psiindexlist.append([jj])
+                for ii in vmap2[i]:
+                  for k in range(H.M[ii,jj][0]):
+                    psiindexlist[-1].append(ii)
+
+        Klocationlist = []
+        Kindexlist = []
+        for i in range(1,G1.M.nrows()):
+          for r in range(1,rmax+1):
+            for k in range(G1.M[i,0][r]):
+              Klocationlist.append(vmap1[i])
+              Kindexlist.append(r)
+        for i in range(1,G2.M.nrows()):
+          for r in range(1,rmax+1):
+            for k in range(G2.M[i,0][r]):
+              Klocationlist.append(vmap2[i])
+              Kindexlist.append(r)
+
+        psilist = []
+        for j in B:
+          S = [i for i in range(1,H.M.nrows()) if H.M[i,j][0] != 0]
+          if len(S) == 2:
+            psilist.append([[S[0],j],[S[1],j]])
+          else:
+            psilooplist.append([[0,1],[1,0]])
+            psiindexlist.append([j,S[0],S[0]])
+
+        for psiloopvals in CartesianProduct(*psilooplist):
+          for Klocs in CartesianProduct(*Klocationlist):
+            for psilocs in CartesianProduct(*psilist):
+              Hcopycopy = Graph(Hcopy.M)
+              for i in range(len(psiindexlist)):
+                Hcopycopy.M[psiindexlist[i][1],psiindexlist[i][0]] += psiloopvals[i][0]*X
+                if psiindexlist[i][1] == psiindexlist[i][2]:
+                  Hcopycopy.M[psiindexlist[i][1],psiindexlist[i][0]] += psiloopvals[i][1]*X^2
+                else:
+                  Hcopycopy.M[psiindexlist[i][2],psiindexlist[i][0]] += psiloopvals[i][1]*X
+              for i in range(len(Kindexlist)):
+                Hcopycopy.M[Klocs[i],0] += X^Kindexlist[i]
+              for i in psilocs:
+                Hcopycopy.M[i[0],i[1]] += X
+              for k in Hloops:
+                if Hcopycopy.M[k][2] > Hcopycopy.M[k][1]:
+                  Hcopycopy.M[k] += (Hcopycopy.M[k][2] - Hcopycopy.M[k][1])*(X - X^2)
+              answer += (-1)^len(B)*loop_factor/auts*socle_eval(Hcopycopy,moduli_type)
+  return answer
+
 def multiply(r1,i1,r2,i2,g,rmax,markings=(),moduli_type=MODULI_ST):
   unpurify = capply(unpurify_map,g,r1+r2,markings,moduli_type)
   gens = capply(all_strata,g,r1+r2,markings,moduli_type)
@@ -299,6 +448,27 @@ def pairing_submatrix(S1,S2,g,r1,markings=(),moduli_type=MODULI_ST):
   #      print "%s done" % count
   return pairings
 
+def socle_eval(G,moduli_type=MODULI_ST):
+  answer = QQ(1)
+  for i in range(1,G.M.nrows()):
+    g0 = G.M[i,0][0]
+    psilist = []
+    for j in range(1,G.M.ncols()):
+      if G.M[i,j][0] > 0:
+        psilist.append(G.M[i,j][1])
+        if G.M[i,j][0] == 2:
+          psilist.append(G.M[i,j][2])
+    n0 = len(psilist)
+    dim0 = dim_form(g0,n0,moduli_type)
+    kappalist = []
+    for j in range(1,dim0+1):
+      for k in range(G.M[i,0][j]):
+        kappalist.append(j)
+    if sum(psilist)+sum(kappalist) != dim0:
+      return QQ(0)
+    answer *= capply(socle_formula,g0,tuple(psilist),tuple(kappalist),moduli_type)
+  return answer
+
 def socle_evaluation(num,g,markings=(),moduli_type=MODULI_ST):
   answer = 1
   G = single_stratum(num,g,dim_form(g,len(markings),moduli_type),markings,moduli_type)
@@ -319,16 +489,16 @@ def socle_evaluation(num,g,markings=(),moduli_type=MODULI_ST):
     if sum(psilist)+sum(kappalist) != dim0:
       print "ERROR: wrong dim"
       return
-    answer *= socle_formula(g0,psilist,kappalist,moduli_type)
+    answer *= capply(socle_formula,g0,tuple(psilist),tuple(kappalist),moduli_type)
   return answer
 
 def socle_formula(g,psilist,kappalist,moduli_type=MODULI_ST):
   if moduli_type == MODULI_CT or g == 0:
-    return CTconst(g)*CTsum(psilist,kappalist)
+    return CTconst(g)*CTsum(list(psilist),list(kappalist))
   if moduli_type <= MODULI_SM or moduli_type == MODULI_RT:
-    return RTsum(g,psilist,kappalist)
+    return RTsum(g,list(psilist),list(kappalist))
   if moduli_type == MODULI_ST:
-    return STsum(psilist,kappalist)
+    return STsum(list(psilist),list(kappalist))
 
 def multi(sigma):
   term = factorial(sum(sigma))
@@ -536,12 +706,9 @@ def para_pairing_dict(S1,S2,g,r1,markings=(),moduli_type=MODULI_ST):
   D = {}
   r3 = dim_form(g,len(markings),moduli_type)
   r2 = r3-r1
-  ngens3 = num_strata(g,r3,markings,moduli_type)
-  socle_evaluations = [capply(socle_evaluation,i,g,markings,moduli_type) for i in range(ngens3)]
   for i1 in S1:
     for i2 in S2:
-      L = multiply(r1,i1,r2,i2,g,r3,markings,moduli_type)
-      D[i1,i2] = sum([L[k]*socle_evaluations[k] for k in range(ngens3)])
+      D[i1,i2] = compute_pairing(r1,i1,r2,i2,g,r3,markings,moduli_type)
   return D
 
 def para_gorenstein(g,r1,markings=(),moduli_type=MODULI_ST):
@@ -556,7 +723,6 @@ def para_gorenstein(g,r1,markings=(),moduli_type=MODULI_ST):
     for num in range(num_pure_strata(g,r,markings,moduli_type)):
       D = capply(pure_strata_autom_count,num,g,r,markings,moduli_type)
   D = capply(contraction_table,g,r3,markings,moduli_type)
-  D = capply(unpurify_map,g,r3,markings,moduli_type)
   ngens3 = num_strata(g,r3,markings,moduli_type)
   for i in range(ngens3):
     D = capply(socle_evaluation,i,g,markings,moduli_type)
