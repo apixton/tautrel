@@ -8,5 +8,4 @@ if 'initialized' not in globals():
   MODULI_ST = 3
   cache_dict = {}
   ENABLE_DPRINT = False
-  ENABLE_DSAVE = False
   initialized = True

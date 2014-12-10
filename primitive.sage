@@ -41,8 +41,8 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
   #print "%s,%s,%s: %s" % (g,r,n,len(answer))
   dprint("End basic_rels (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   dprint("%s,%s,%s,%s: rank %s",g,r,n,moduli_type,sym_ngen-previous_rank)
-  if moduli_type > -1:
-    dsave("sparse-%s,%s,%s,%s|%s,%s,%s",g,r,n,moduli_type,len(answer),sym_ngen-previous_rank,floor(get_memory_usage()))
+  #if moduli_type > -1:
+    #dsave("sparse-%s,%s,%s,%s|%s,%s,%s",g,r,n,moduli_type,len(answer),sym_ngen-previous_rank,floor(get_memory_usage()))
   #if moduli_type >= 0 and sym_ngen-previous_rank != betti(g,r,tuple([1 for i in range(n)]),moduli_type):
   #  dprint("ERROR: %s,%s,%s,%s",g,r,n,moduli_type)
   #  return
@@ -106,11 +106,11 @@ def recursive_betti(g,r,markings=(),moduli_type=MODULI_ST):
               relation = simplify_sparse(relation)
               relations.append(relation)
   dprint("%s gens, %s rels",ngen,len(relations))
-  dsave("sparse-%s-gens-%s-rels",ngen,len(relations))
+  #dsave("sparse-%s-gens-%s-rels",ngen,len(relations))
   dprint("Middle recursive_betti (%s,%s,%s,%s): %s",g,r,markings,moduli_type,floor(get_memory_usage()))
   relations = remove_duplicates2(relations)
   dprint("%s gens, %s distinct rels",ngen,len(relations))
-  dsave("sparse-%s-distinct-rels",len(relations))
+  #dsave("sparse-%s-distinct-rels",len(relations))
   rank = 0
   D = {}
   nrels = len(relations)
@@ -120,7 +120,7 @@ def recursive_betti(g,r,markings=(),moduli_type=MODULI_ST):
   if nrels > 0:
     row_order,col_order = choose_orders_sparse(D,nrels,ngen)
     rank = compute_rank_sparse(D,row_order,col_order)
-  dsave("sparse-answer-%s",ngen-rank)
+  #dsave("sparse-answer-%s",ngen-rank)
   return ngen - rank
 
 def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
