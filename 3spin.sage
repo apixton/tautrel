@@ -451,6 +451,8 @@ def para_betti(g,r,markings=(),moduli_type=MODULI_ST):
   relations = []
   for res in result_list:
     relations += res[1]
+  if len(relations) == 0:
+    return num_strata(g,r,markings,moduli_type)
   relations.reverse()
   # this is slower but much more memory-efficient than sage's matrix rank function
   return (len(relations[0]) - compute_rank(relations))
