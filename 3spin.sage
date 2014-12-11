@@ -388,3 +388,70 @@ def betti(g,r,marked_points=(),moduli_type=MODULI_ST):
 
 def FZ_rels(g,r,markings=(),moduli_type=MODULI_ST):
   return span(FZ_matrix(g,r,markings,moduli_type)).basis()
+
+##### some crude parallelization:
+
+@parallel
+def para_FZ_rels(g,r,g2,r0,markings=(),moduli_type=MODULI_ST):
+  if r0 == 0:
+    return interior_FZ(g,r,markings,moduli_type)
+  if moduli_type <= MODULI_SM:
+    return []
+  if 3*(r-r0) < g2 + 1:
+    return []
+  generators = capply(all_strata,g,r,markings,moduli_type)
+  ngen = len(generators)
+  relations = []
+  old_count = 0
+  strata = capply(all_strata,g,r0,markings,moduli_type)
+  for G in strata:
+    vertex_orbits = graph_count_automorphisms(G,True)
+    for i in [orbit[0] for orbit in vertex_orbits]:
+      if G.M[i,0][0] != g2:
+        continue
+      good = True
+      for j in range(G.M.ncols()):
+        if R(G.M[i,j][0]) != G.M[i,j]:
+          good = False
+          break
+      if good:
+        d = G.degree(i)
+        if dim_form(g2,d,moduli_type) < r-r0:
+          continue
+        strata2 = capply(all_strata,g2,r-r0,tuple(range(1,d+1)),moduli_type)
+        which_gen_list = [-1 for num in range(len(strata2))]
+        for num in range(len(strata2)):
+          G_copy = Graph(G.M)
+          G_copy.replace_vertex_with_graph(i,strata2[num])
+          which_gen_list[num] = num_of_stratum(G_copy,g,r,markings,moduli_type)
+        rFZpl = reduced_FZ_param_list(G,i,g2,d,3*(r-r0)-g2-1)
+        for FZ_param in rFZpl:
+          relation = [0 for k in range(ngen)]
+          for num in range(len(strata2)):
+            if which_gen_list[num] != -1:
+              relation[which_gen_list[num]] += capply(FZ_coeff,num,FZ_param,g2,r-r0,tuple(range(1,d+1)),moduli_type)
+          relations.append(relation)
+  return relations
+
+def para_betti(g,r,markings=(),moduli_type=MODULI_ST):
+  # precompute a few things?
+  for r0 in range(r+1):
+    D = capply(all_strata,g,r0,markings,moduli_type)
+  # precompute vertex_orbits?
+
+  input_list = []
+  for r0 in range(r):
+    for g2 in range(g,-1,-1):
+      if r0 == 0 and g2 > 0:
+        continue
+      elif 3*(r-r0) < g2 + 1:
+        continue
+      input_list.append((g,r,g2,r0,markings,moduli_type))
+  result_list = list(para_FZ_rels(input_list))
+  relations = []
+  for res in result_list:
+    relations += res[1]
+  relations.reverse()
+  # this is slower but much more memory-efficient than sage's matrix rank function
+  return (len(relations[0]) - compute_rank(relations))
+  #return len(relations[0]) - matrix(relations).rank()
