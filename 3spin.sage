@@ -392,12 +392,14 @@ def FZ_rels(g,r,markings=(),moduli_type=MODULI_ST):
 ##### some crude parallelization:
 
 @parallel
-def para_FZ_rels(g,r,g2,r0,markings=(),moduli_type=MODULI_ST):
+def para_FZ_rels(g,r,g2,r0,d,markings=(),moduli_type=MODULI_ST):
   if r0 == 0:
     return interior_FZ(g,r,markings,moduli_type)
   if moduli_type <= MODULI_SM:
     return []
   if 3*(r-r0) < g2 + 1:
+    return []
+  if dim_form(g2,d,moduli_type) < r-r0:
     return []
   generators = capply(all_strata,g,r,markings,moduli_type)
   ngen = len(generators)
@@ -409,15 +411,14 @@ def para_FZ_rels(g,r,g2,r0,markings=(),moduli_type=MODULI_ST):
     for i in [orbit[0] for orbit in vertex_orbits]:
       if G.M[i,0][0] != g2:
         continue
+      if G.degree(i) != d:
+        continue
       good = True
       for j in range(G.M.ncols()):
         if R(G.M[i,j][0]) != G.M[i,j]:
           good = False
           break
       if good:
-        d = G.degree(i)
-        if dim_form(g2,d,moduli_type) < r-r0:
-          continue
         strata2 = capply(all_strata,g2,r-r0,tuple(range(1,d+1)),moduli_type)
         which_gen_list = [-1 for num in range(len(strata2))]
         for num in range(len(strata2)):
@@ -440,13 +441,18 @@ def para_betti(g,r,markings=(),moduli_type=MODULI_ST):
   # precompute vertex_orbits?
 
   input_list = []
-  for r0 in range(r):
+  input_list.append((g,r,0,0,0,markings,moduli_type))
+  degree_mult = 2
+  if moduli_type < MODULI_ST:
+    degree_mult = 1
+  for r0 in range(1,r):
     for g2 in range(g,-1,-1):
-      if r0 == 0 and g2 > 0:
+      if 3*(r-r0) < g2 + 1:
         continue
-      elif 3*(r-r0) < g2 + 1:
-        continue
-      input_list.append((g,r,g2,r0,markings,moduli_type))
+      for d in range(1,degree_mult*r0+len(markings)+1):
+        if dim_form(g2,d,moduli_type) < r-r0:
+          continue
+        input_list.append((g,r,g2,r0,d,markings,moduli_type))
   result_list = list(para_FZ_rels(input_list))
   relations = []
   for res in result_list:
@@ -455,5 +461,5 @@ def para_betti(g,r,markings=(),moduli_type=MODULI_ST):
     return num_strata(g,r,markings,moduli_type)
   relations.reverse()
   # this is slower but much more memory-efficient than sage's matrix rank function
-  return (len(relations[0]) - compute_rank(relations))
-  #return len(relations[0]) - matrix(relations).rank()
+  #return (len(relations[0]) - compute_rank(relations))
+  return len(relations[0]) - matrix(relations).rank()
