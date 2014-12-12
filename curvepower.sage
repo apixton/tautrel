@@ -95,6 +95,34 @@ def convert_to_C(G):
     factor *= multinomial([G.M[i,j][1] for j in range(1,nc)] + kappa_list)
   return stratum,factor
 
+def basic_C_rels(g,r,markings):
+  generators = capply(all_strata,g,r,markings,MODULI_RT)
+  gen_list = []
+  for i in range(len(generators)):
+    if is_C_stratum(generators[i]):
+      gen_list.append(i)
+  ngen = len(gen_list)
+  C_generators = capply(all_strata_C,r,markings)
+  C_ngen = len(C_generators)
+  params = FZ_param_list(3*r-g-1,markings)
+  C_conversion = []
+  for k in range(ngen):
+    strata,coeff = convert_to_C(generators[gen_list[k]])
+    C_conversion.append([-1,coeff])
+    for i in range(C_ngen):
+      if C_generators[i] == strata:
+        C_conversion[-1][0] = i
+        break
+  C_relations = []
+  for FZ_param in params:
+    relation = [0 for i in range(C_ngen)]
+    for i in range(ngen):
+      j = C_conversion[i][0]
+      coeff = C_conversion[i][1]
+      relation[j] += coeff*capply(FZ_coeff,gen_list[i],FZ_param,g,r,markings,MODULI_RT)
+    C_relations.append(relation)
+  return C_relations
+
 def list_all_FZ_C_sym(g,r,n):
   markings = (1 for i in range(n))
   setpartlist = Partitions(n).list()
@@ -106,31 +134,9 @@ def list_all_FZ_C_sym(g,r,n):
     num_ones = max(n-2*codim,0)
     new_markings = [1 for i in range(num_ones)] + range(2,n-codim-num_ones+2)
     new_markings = tuple(new_markings)
-    generators = capply(all_strata,g,r-codim,new_markings,MODULI_RT)
-    gen_list = []
-    for i in range(len(generators)):
-      if is_C_stratum(generators[i]):
-        gen_list.append(i)
-    ngen = len(gen_list)
     C_generators = capply(all_strata_C,r-codim,new_markings)
     C_ngen = len(C_generators)
-    params = FZ_param_list(3*(r-codim)-g-1,new_markings)
-    C_conversion = []
-    for k in range(ngen):
-      strata,coeff = convert_to_C(generators[gen_list[k]])
-      C_conversion.append([-1,coeff])
-      for i in range(C_ngen):
-        if C_generators[i] == strata:
-          C_conversion[-1][0] = i
-          break
-    C_relations = []
-    for FZ_param in params:
-      relation = [0 for i in range(C_ngen)]
-      for i in range(ngen):
-        j = C_conversion[i][0]
-        coeff = C_conversion[i][1]
-        relation[j] += coeff*capply(FZ_coeff,gen_list[i],FZ_param,g,r-codim,new_markings,MODULI_RT)
-      C_relations.append(relation)
+    C_relations = capply(basic_C_rels,g,r-codim,new_markings)
 
     for setpart in setpartlist:
       if len(setpart) != n-codim:
