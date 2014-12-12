@@ -434,7 +434,7 @@ def para_FZ_rels(g,r,g2,r0,d,markings=(),moduli_type=MODULI_ST):
           relations.append(relation)
   return relations
 
-def para_betti(g,r,markings=(),moduli_type=MODULI_ST):
+def para_betti_prime(p,g,r,markings=(),moduli_type=MODULI_ST):
   # precompute a few things?
   for r0 in range(r+1):
     D = capply(all_strata,g,r0,markings,moduli_type)
@@ -459,7 +459,10 @@ def para_betti(g,r,markings=(),moduli_type=MODULI_ST):
     relations += res[1]
   if len(relations) == 0:
     return num_strata(g,r,markings,moduli_type)
-  relations.reverse()
-  # this is slower but much more memory-efficient than sage's matrix rank function
-  #return (len(relations[0]) - compute_rank(relations))
-  return len(relations[0]) - matrix(relations).rank()
+
+  if p > 0:
+    KK = FiniteField(p)
+    return len(relations[0]) - matrix(KK,relations).rank()
+  else:
+    relations.reverse()
+    return (len(relations[0]) - compute_rank(relations))
