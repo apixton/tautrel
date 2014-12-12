@@ -31,5 +31,8 @@ attach "strata_operations.sage"
 # code to find new relations inside the 3-spin relations
 attach "primitive.sage"
 
+# specialized code for powers of the universal curve
+attach "curvepower.sage"
+
 # some tests
 attach "tests.sage"
