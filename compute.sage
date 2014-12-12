@@ -31,3 +31,8 @@ def compute_goren_C(g,n=0):
   d = g-2+n
   for r in range(0,floor(d/2)+1):
     ans = log_func(gorenstein_C,g,r,n)
+
+def compute_para_goren_C(g,n=0):
+  d = g-2+n
+  for r in range(0,floor(d/2)+1):
+    ans = log_func(para_gorenstein_C,g,r,n)

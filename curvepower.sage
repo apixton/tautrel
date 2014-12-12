@@ -202,7 +202,7 @@ def kC(sigma):
   sigma_reduced.sort()
   return zero_factor*(-1)^(len(sigma_reduced))*capply(kC_helper,tuple(sigma_reduced))
 
-def pairing(gen1,gen2):
+def pairing_C(gen1,gen2):
   kappa_list = gen1[0] + gen2[0]
   diag_list = [[copy(r[0]),r[1]] for r in gen1[1] + gen2[1]]
   sign = 1
@@ -229,7 +229,7 @@ def pairing(gen1,gen2):
       diag_list = diag_list[1:]
   return sign*kC(kappa_list)
 
-def pairing_sym(gen1,gen2,markings):
+def pairing_C_sym(gen1,gen2,markings):
   gen1_copy = [gen1[0],[[copy(r[0]),r[1]] for r in gen1[1]]]
   gen2_copy = [gen2[0],[[copy(r[0]),r[1]] for r in gen2[1]]]
   block_sizes = []
@@ -264,7 +264,7 @@ def pairing_sym(gen1,gen2,markings):
     for i in range(len(gen2[1])):
       for j in range(len(gen2[1][i][0])):
         gen2_copy2[1][i][0][j] = sigma[gen2_copy[1][i][0][j]]
-    total += pairing(gen1_copy,gen2_copy2)
+    total += pairing_C(gen1_copy,gen2_copy2)
   return total
 
 def sym_orbit(gen,n):
@@ -300,7 +300,7 @@ def gor_betti(g,r,n):
   M = Matrix(QQ,len(L1),len(L2))
   for i in range(len(L1)):
     for j in range(len(L2)):
-      M[i,j] = pairing(L1[i],L2[j])
+      M[i,j] = pairing_C(L1[i],L2[j])
   return M.rank()
 
 def gor_betti_sym(g,r,n):
@@ -313,10 +313,10 @@ def gor_betti_sym(g,r,n):
     orbit = sym_orbit(L1[i],n)
     for gen in orbit:
       for j in range(len(L2)):
-        M[i,j] += pairing(gen,L2[j])
+        M[i,j] += pairing_C(gen,L2[j])
   return M.rank()
 
-def gorenstein_C(g,r,d):
+def gorenstein_C(g,r,d=0):
   """
   This function returns the rank of the codimension r grading of the
   Gorenstein quotient of the tautological ring of the dth symmetric power
@@ -333,3 +333,61 @@ def gorenstein_C(g,r,d):
   if r > g+d-2:
     return 0
   return gor_betti_sym(g,r,d)
+
+@parallel
+def para_pairing_dict(S1,S2,g,r1,n):
+  D = {}
+  r2 = g-2+n-r1
+  L1 = capply(all_strata_C,r1,tuple([1 for i in range(n)]))
+  L2 = capply(all_strata_C,r2,tuple([1 for i in range(n)]))
+  rep_dict = {}
+  for i2 in S2:
+    rep_dict[i2] = sym_orbit_one(L2[i2],n)
+  for i1 in S1:
+    orbit = sym_orbit(L1[i1],n)
+    for i2 in S2:
+      D[i1,i2] = 0
+      for gen in orbit:
+        D[i1,i2] += pairing_C(gen,rep_dict[i2])
+  return D
+
+def para_gorenstein_C(g,r1,n=0):
+  r2 = g-2+n-r1
+  # precompute stuff
+  D = capply(all_strata_C,r1,tuple([1 for i in range(n)]))
+  ngen1 = len(D)
+  D = capply(all_strata_C,r2,tuple([1 for i in range(n)]))
+  ngen2 = len(D)
+  for sigma in Partitions(g-2):
+    sigma_list = list(sigma)
+    sigma_list.sort()
+    D = capply(kC_helper,tuple(sigma_list))
+  # probably should do more stuff here
+
+  # should choose actual generators?
+  S1 = list(range(ngen1))
+  S2 = list(range(ngen2))
+
+  # chop generator lists into blocks
+  a1 = len(S1)
+  a2 = len(S2)
+  k1 = min(a1,30)
+  k2 = min(a2,30)
+  S1list = [S1[floor(i*a1/k1):floor((i+1)*a1/k1)] for i in range(k1)]
+  S2list = [S2[floor(i*a2/k2):floor((i+1)*a2/k2)] for i in range(k2)]
+  input_list = []
+  for T1 in S1list:
+    for T2 in S2list:
+      input_list.append((T1,T2,g,r1,n))
+  result_list = list(para_pairing_dict(input_list))
+  result_dict = {}
+  for res in result_list:
+    result_dict.update(res[1])
+
+  M = [[0 for i2 in S2] for i1 in S1]
+  for i1 in range(len(S1)):
+    for i2 in range(len(S2)):
+      M[i1][i2] = result_dict[S1[i1],S2[i2]]
+
+  # compute rank; maybe should do this in a different way at some point.
+  return matrix(M).rank()
