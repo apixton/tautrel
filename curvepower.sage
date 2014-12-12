@@ -161,7 +161,7 @@ def list_all_FZ_C_sym(g,r,n):
           modified_C_relations[j][which_gen] += C_relations[j][k]
       final_relations += modified_C_relations
   if len(final_relations) == 0:
-    return [0 for i in range(final_ngen)]
+    return [[0 for i in range(final_ngen)]]
   return final_relations
 
 def betti_C(g,r,d):
