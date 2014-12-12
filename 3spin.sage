@@ -462,7 +462,9 @@ def para_betti_prime(p,g,r,markings=(),moduli_type=MODULI_ST):
 
   if p > 0:
     KK = FiniteField(p)
-    return len(relations[0]) - matrix(KK,relations).rank()
-  else:
-    relations.reverse()
-    return (len(relations[0]) - compute_rank(relations))
+    for rel in relations:
+      for i in range(len(rel)):
+        rel[i] = KK(rel[i])
+
+  row_order,col_order = choose_orders(relations)
+  return (len(relations[0]) - compute_rank2(relations,row_order,col_order))
