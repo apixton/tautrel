@@ -184,6 +184,98 @@ def betti_C(g,r,d):
   L.reverse()
   return (len(L[0]) - compute_rank(L))
 
+def para_betti_C(g,r,d):
+  if r > g+d-2:
+    return 0
+  L = para_list_all_FZ_C_sym(g,r,d)
+  L.reverse()
+  return (len(L[0]) - compute_rank(L))
+
+def para_list_all_FZ_C_sym(g,r,n):
+  markings = (1 for i in range(n))
+  setpartlist = Partitions(n).list()
+  final_generators = capply(all_strata_C,r,markings)
+  final_ngen = len(final_generators)
+  final_relations = []
+
+  for codim in range(0,max(min(r,n),1)):
+    num_ones = max(n-2*codim,0)
+    new_markings = [1 for i in range(num_ones)] + range(2,n-codim-num_ones+2)
+    new_markings = tuple(new_markings)
+    C_generators = capply(all_strata_C,r-codim,new_markings)
+    C_ngen = len(C_generators)
+    C_relations = para_basic_C_rels(g,r-codim,new_markings)
+
+    for setpart in setpartlist:
+      if len(setpart) != n-codim:
+        continue
+      modified_C_relations = [[0 for i in range(final_ngen)] for j in range(len(C_relations))]
+      for k in range(C_ngen):
+        X = C_generators[k]
+        strata = [X[0],[[[],i[1]] for i in X[1]]]
+        for j in range(len(X[1])):
+          for i in X[1][j][0]:
+            if i == 1:
+              strata[1][j][0].append(1)
+            else:
+              strata[1][j][0] += [1 for ii in range(setpart[i-2])]
+          strata[1][j][0].sort()
+        strata[1].sort()
+        for i in range(final_ngen):
+          if final_generators[i] == strata:
+            which_gen = i
+            break
+        for j in range(len(C_relations)):
+          modified_C_relations[j][which_gen] += C_relations[j][k]
+      final_relations += modified_C_relations
+  if len(final_relations) == 0:
+    return [[0 for i in range(final_ngen)]]
+  return final_relations
+
+@parallel
+def para_FZ_subrels(gen_list,param_list,g,r,markings=(),moduli_type=MODULI_ST):
+  rel_list = []
+  for param in param_list:
+    rel_list.append([])
+    for i in gen_list:
+      rel_list[-1].append(FZ_coeff(i,param,g,r,markings,moduli_type))
+  return rel_list
+
+def para_basic_C_rels(g,r,markings):
+  generators = capply(all_strata,g,r,markings,MODULI_RT)
+  gen_list = []
+  for i in range(len(generators)):
+    if is_C_stratum(generators[i]):
+      gen_list.append(i)
+  ngen = len(gen_list)
+  C_generators = capply(all_strata_C,r,markings)
+  C_ngen = len(C_generators)
+  params = FZ_param_list(3*r-g-1,markings)
+  C_conversion = []
+  for k in range(ngen):
+    strata,coeff = convert_to_C(generators[gen_list[k]])
+    C_conversion.append([-1,coeff])
+    for i in range(C_ngen):
+      if C_generators[i] == strata:
+        C_conversion[-1][0] = i
+        break
+  C_relations = []
+  a1 = len(params)
+  k1 = min(a1,100)
+  Slist = [params[floor(i*a1/k1):floor((i+1)*a1/k1)] for i in range(k1)]
+  input_list = []
+  for S in Slist:
+    input_list.append((gen_list,S,g,r,markings,MODULI_RT))
+  for FZ_rel_list in para_FZ_subrels(input_list):
+    for FZ_rel in FZ_rel_list[1]:
+      relation = [0 for i in range(C_ngen)]
+      for i in range(ngen):
+        j = C_conversion[i][0]
+        coeff = C_conversion[i][1]
+        relation[j] += coeff*FZ_rel[i]
+      C_relations.append(relation)
+  return C_relations
+
 ######################### now gorenstein code
 
 def multi2C(sigma):
