@@ -27,6 +27,9 @@ def compute_para_goren2(g,n=0,moduli_type=MODULI_ST):
 def compute_betti_C(g,r,n=0):
   ans = log_func(betti_C,g,r,n)
 
+def compute_betti_C_unsym(g,r,n=0):
+  ans = log_func(betti_C_unsym,g,r,n)
+
 def compute_para_betti_C(g,r,n=0):
   ans = log_func(para_betti_C,g,r,n)
 
@@ -34,6 +37,11 @@ def compute_goren_C(g,n=0):
   d = g-2+n
   for r in range(0,floor(d/2)+1):
     ans = log_func(gorenstein_C,g,r,n)
+
+def compute_goren_C_unsym(g,n=0):
+  d = g-2+n
+  for r in range(0,floor(d/2)+1):
+    ans = log_func(gorenstein_C_unsym,g,r,n)
 
 def compute_para_goren_C(g,n=0):
   d = g-2+n
