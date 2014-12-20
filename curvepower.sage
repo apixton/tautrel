@@ -119,7 +119,7 @@ def basic_C_rels(g,r,markings):
     for i in range(ngen):
       j = C_conversion[i][0]
       coeff = C_conversion[i][1]
-      relation[j] += coeff*capply(FZ_coeff,gen_list[i],FZ_param,g,r,markings,MODULI_RT)
+      relation[j] += coeff*FZ_coeff(gen_list[i],FZ_param,g,r,markings,MODULI_RT)
     C_relations.append(relation)
   return C_relations
 
@@ -233,6 +233,49 @@ def para_betti_C(g,r,d):
   L = para_list_all_FZ_C_sym(g,r,d)
   L.reverse()
   return (len(L[0]) - compute_rank(L))
+
+def para_betti_C_unsym(g,r,d):
+  if r > g+d-2:
+    return 0
+  L = para_list_all_FZ_C(g,r,d)
+  L.reverse()
+  return (len(L[0]) - compute_rank(L))
+
+def para_list_all_FZ_C(g,r,n):
+  markings = tuple(range(1,n+1))
+  setpartlist = setparts(markings)
+  final_generators = capply(all_strata_C,r,markings)
+  final_ngen = len(final_generators)
+  final_relations = []
+
+  for codim in range(0,max(min(r,n),1)):
+    new_markings = tuple(range(1,n-codim+1))
+    C_generators = capply(all_strata_C,r-codim,new_markings)
+    C_ngen = len(C_generators)
+    C_relations = para_basic_C_rels(g,r-codim,new_markings)
+
+    for setpart in setpartlist:
+      if len(setpart) != n-codim:
+        continue
+      modified_C_relations = [[0 for i in range(final_ngen)] for j in range(len(C_relations))]
+      for k in range(C_ngen):
+        X = C_generators[k]
+        strata = [X[0],[[[],i[1]] for i in X[1]]]
+        for j in range(len(X[1])):
+          for i in X[1][j][0]:
+            strata[1][j][0] += setpart[i-1]
+          strata[1][j][0].sort()
+        strata[1].sort()
+        for i in range(final_ngen):
+          if final_generators[i] == strata:
+            which_gen = i
+            break
+        for j in range(len(C_relations)):
+          modified_C_relations[j][which_gen] += C_relations[j][k]
+      final_relations += modified_C_relations
+  if len(final_relations) == 0:
+    return [[0 for i in range(final_ngen)]]
+  return final_relations
 
 def para_list_all_FZ_C_sym(g,r,n):
   markings = (1 for i in range(n))

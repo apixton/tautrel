@@ -33,6 +33,9 @@ def compute_betti_C_unsym(g,r,n=0):
 def compute_para_betti_C(g,r,n=0):
   ans = log_func(para_betti_C,g,r,n)
 
+def compute_para_betti_C_unsym(g,r,n=0):
+  ans = log_func(para_betti_C_unsym,g,r,n)
+
 def compute_goren_C(g,n=0):
   d = g-2+n
   for r in range(0,floor(d/2)+1):
