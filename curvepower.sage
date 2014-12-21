@@ -362,6 +362,7 @@ def para_basic_C_rels(g,r,markings):
   C_relations = []
   a1 = len(params)
   k1 = min(a1,100)
+  dlog('debug','parallelizing %s tasks in para_basic_C_rels(%s,%s,%s)',k1,g,r,markings)
   Slist = [params[floor(i*a1/k1):floor((i+1)*a1/k1)] for i in range(k1)]
   input_list = []
   for S in Slist:
@@ -576,6 +577,7 @@ def para_gorenstein_C(g,r1,n=0):
   a2 = len(S2)
   k1 = min(a1,30)
   k2 = min(a2,30)
+  dlog('debug','parallelizing %s tasks in para_gorenstein_C(%s,%s,%s)',k1*k2,g,r1,n)
   S1list = [S1[floor(i*a1/k1):floor((i+1)*a1/k1)] for i in range(k1)]
   S2list = [S2[floor(i*a2/k2):floor((i+1)*a2/k2)] for i in range(k2)]
   input_list = []

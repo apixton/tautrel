@@ -743,6 +743,7 @@ def para_gorenstein(g,r1,markings=(),moduli_type=MODULI_ST):
   a2 = len(S2)
   k1 = min(a1,30)
   k2 = min(a2,30)
+  dlog('debug','parallelizing %s tasks in para_gorenstein(%s,%s,%s,%s)',k1*k2,g,r1,markings,mod_type_string(moduli_type))
   S1list = [S1[floor(i*a1/k1):floor((i+1)*a1/k1)] for i in range(k1)]
   S2list = [S2[floor(i*a2/k2):floor((i+1)*a2/k2)] for i in range(k2)]
   input_list = []
