@@ -227,19 +227,33 @@ def betti_C_unsym(g,r,d):
   L.reverse()
   return (len(L[0]) - compute_rank(L))
 
-def para_betti_C(g,r,d):
+def para_betti_C(p,g,r,d):
   if r > g+d-2:
     return 0
   L = para_list_all_FZ_C_sym(g,r,d)
-  L.reverse()
-  return (len(L[0]) - compute_rank(L))
 
-def para_betti_C_unsym(g,r,d):
+  if p > 0:
+    KK = FiniteField(p)
+    for rel in L:
+      for i in range(len(rel)):
+        rel[i] = KK(rel[i])
+
+  row_order,col_order = choose_orders(L)
+  return (len(L[0]) - compute_rank2(L,row_order,col_order))
+
+def para_betti_C_unsym(p,g,r,d):
   if r > g+d-2:
     return 0
   L = para_list_all_FZ_C(g,r,d)
-  L.reverse()
-  return (len(L[0]) - compute_rank(L))
+
+  if p > 0:
+    KK = FiniteField(p)
+    for rel in L:
+      for i in range(len(rel)):
+        rel[i] = KK(rel[i])
+
+  row_order,col_order = choose_orders(L)
+  return (len(L[0]) - compute_rank2(L,row_order,col_order))
 
 def para_list_all_FZ_C(g,r,n):
   markings = tuple(range(1,n+1))
