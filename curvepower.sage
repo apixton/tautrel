@@ -123,7 +123,66 @@ def basic_C_rels(g,r,markings):
     C_relations.append(relation)
   return C_relations
 
-def list_all_FZ_C(g,r,n):
+def list_all_FZ_C_general(g,r,markings,para=False):
+  setpartlist = setparts(markings)
+  n = len(markings)
+  final_generators = capply(all_strata_C,r,markings)
+  final_ngen = len(final_generators)
+  final_relations = []
+
+  for codim in range(0,max(min(r,n),1)):
+    new_markings = []
+    for i in range(n-2*codim):
+      if markings[i] == markings[i+2*codim]:
+        new_markings.append(markings[i])
+    max_old_value = max([0] + new_markings)
+    new_value = max_old_value + 1
+    while len(new_markings) < n-codim:
+      new_markings.append(new_value)
+      new_value += 1
+    new_markings = tuple(new_markings)
+    C_generators = capply(all_strata_C,r-codim,new_markings)
+    C_ngen = len(C_generators)
+    if para:
+      C_relations = para_basic_C_rels(g,r-codim,new_markings)
+    else:
+      C_relations = basic_C_rels(g,r-codim,new_markings)
+
+    for setpart in setpartlist:
+      if len(setpart) != n-codim:
+        continue
+      setpart2 = [[i] for i in new_markings if i <= max_old_value]
+      setpart3 = []
+      count = 0
+      for part in setpart:
+        if count < len(setpart2) and part == setpart2[count]:
+          count += 1
+        else:
+          setpart3.append(part)
+      modified_C_relations = [[0 for i in range(final_ngen)] for j in range(len(C_relations))]
+      for k in range(C_ngen):
+        X = C_generators[k]
+        strata = [X[0],[[[],i[1]] for i in X[1]]]
+        for j in range(len(X[1])):
+          for i in X[1][j][0]:
+            if i <= max_old_value:
+              strata[1][j][0].append(i)
+            else:
+              strata[1][j][0] += setpart3[i-max_old_value-1]
+          strata[1][j][0].sort()
+        strata[1].sort()
+        for i in range(final_ngen):
+          if final_generators[i] == strata:
+            which_gen = i
+            break
+        for j in range(len(C_relations)):
+          modified_C_relations[j][which_gen] += C_relations[j][k]
+      final_relations += modified_C_relations
+  if len(final_relations) == 0:
+    return [[0 for i in range(final_ngen)]]
+  return final_relations
+
+def list_all_FZ_C(g,r,n,para=False):
   markings = tuple(range(1,n+1))
   setpartlist = setparts(markings)
   final_generators = capply(all_strata_C,r,markings)
@@ -134,7 +193,10 @@ def list_all_FZ_C(g,r,n):
     new_markings = tuple(range(1,n-codim+1))
     C_generators = capply(all_strata_C,r-codim,new_markings)
     C_ngen = len(C_generators)
-    C_relations = capply(basic_C_rels,g,r-codim,new_markings)
+    if para:
+      C_relations = para_basic_C_rels(g,r-codim,new_markings)
+    else:
+      C_relations = basic_C_rels(g,r-codim,new_markings)
 
     for setpart in setpartlist:
       if len(setpart) != n-codim:
@@ -159,7 +221,7 @@ def list_all_FZ_C(g,r,n):
     return [[0 for i in range(final_ngen)]]
   return final_relations
 
-def list_all_FZ_C_sym(g,r,n):
+def list_all_FZ_C_sym(g,r,n,para=False):
   markings = (1 for i in range(n))
   setpartlist = Partitions(n).list()
   final_generators = capply(all_strata_C,r,markings)
@@ -172,7 +234,10 @@ def list_all_FZ_C_sym(g,r,n):
     new_markings = tuple(new_markings)
     C_generators = capply(all_strata_C,r-codim,new_markings)
     C_ngen = len(C_generators)
-    C_relations = capply(basic_C_rels,g,r-codim,new_markings)
+    if para:
+      C_relations = para_basic_C_rels(g,r-codim,new_markings)
+    else:
+      C_relations = basic_C_rels(g,r-codim,new_markings)
 
     for setpart in setpartlist:
       if len(setpart) != n-codim:
@@ -227,10 +292,17 @@ def betti_C_unsym(g,r,d):
   L.reverse()
   return (len(L[0]) - compute_rank(L))
 
+def betti_C_general(g,r,markings):
+  if r > g+len(markings)-2:
+    return 0
+  L = list_all_FZ_C_general(g,r,markings)
+  L.reverse()
+  return (len(L[0]) - compute_rank(L))
+
 def para_betti_C(p,g,r,d):
   if r > g+d-2:
     return 0
-  L = para_list_all_FZ_C_sym(g,r,d)
+  L = list_all_FZ_C_sym(g,r,d,True)
 
   if p > 0:
     KK = FiniteField(p)
@@ -244,7 +316,7 @@ def para_betti_C(p,g,r,d):
 def para_betti_C_unsym(p,g,r,d):
   if r > g+d-2:
     return 0
-  L = para_list_all_FZ_C(g,r,d)
+  L = list_all_FZ_C(g,r,d,True)
 
   if p > 0:
     KK = FiniteField(p)
@@ -255,82 +327,19 @@ def para_betti_C_unsym(p,g,r,d):
   row_order,col_order = choose_orders(L)
   return (len(L[0]) - compute_rank2(L,row_order,col_order))
 
-def para_list_all_FZ_C(g,r,n):
-  markings = tuple(range(1,n+1))
-  setpartlist = setparts(markings)
-  final_generators = capply(all_strata_C,r,markings)
-  final_ngen = len(final_generators)
-  final_relations = []
+def para_betti_C_general(p,g,r,markings):
+  if r > g+len(markings)-2:
+    return 0
+  L = list_all_FZ_C_general(g,r,markings,True)
 
-  for codim in range(0,max(min(r,n),1)):
-    new_markings = tuple(range(1,n-codim+1))
-    C_generators = capply(all_strata_C,r-codim,new_markings)
-    C_ngen = len(C_generators)
-    C_relations = para_basic_C_rels(g,r-codim,new_markings)
+  if p > 0:
+    KK = FiniteField(p)
+    for rel in L:
+      for i in range(len(rel)):
+        rel[i] = KK(rel[i])
 
-    for setpart in setpartlist:
-      if len(setpart) != n-codim:
-        continue
-      modified_C_relations = [[0 for i in range(final_ngen)] for j in range(len(C_relations))]
-      for k in range(C_ngen):
-        X = C_generators[k]
-        strata = [X[0],[[[],i[1]] for i in X[1]]]
-        for j in range(len(X[1])):
-          for i in X[1][j][0]:
-            strata[1][j][0] += setpart[i-1]
-          strata[1][j][0].sort()
-        strata[1].sort()
-        for i in range(final_ngen):
-          if final_generators[i] == strata:
-            which_gen = i
-            break
-        for j in range(len(C_relations)):
-          modified_C_relations[j][which_gen] += C_relations[j][k]
-      final_relations += modified_C_relations
-  if len(final_relations) == 0:
-    return [[0 for i in range(final_ngen)]]
-  return final_relations
-
-def para_list_all_FZ_C_sym(g,r,n):
-  markings = (1 for i in range(n))
-  setpartlist = Partitions(n).list()
-  final_generators = capply(all_strata_C,r,markings)
-  final_ngen = len(final_generators)
-  final_relations = []
-
-  for codim in range(0,max(min(r,n),1)):
-    num_ones = max(n-2*codim,0)
-    new_markings = [1 for i in range(num_ones)] + range(2,n-codim-num_ones+2)
-    new_markings = tuple(new_markings)
-    C_generators = capply(all_strata_C,r-codim,new_markings)
-    C_ngen = len(C_generators)
-    C_relations = para_basic_C_rels(g,r-codim,new_markings)
-
-    for setpart in setpartlist:
-      if len(setpart) != n-codim:
-        continue
-      modified_C_relations = [[0 for i in range(final_ngen)] for j in range(len(C_relations))]
-      for k in range(C_ngen):
-        X = C_generators[k]
-        strata = [X[0],[[[],i[1]] for i in X[1]]]
-        for j in range(len(X[1])):
-          for i in X[1][j][0]:
-            if i == 1:
-              strata[1][j][0].append(1)
-            else:
-              strata[1][j][0] += [1 for ii in range(setpart[i-2])]
-          strata[1][j][0].sort()
-        strata[1].sort()
-        for i in range(final_ngen):
-          if final_generators[i] == strata:
-            which_gen = i
-            break
-        for j in range(len(C_relations)):
-          modified_C_relations[j][which_gen] += C_relations[j][k]
-      final_relations += modified_C_relations
-  if len(final_relations) == 0:
-    return [[0 for i in range(final_ngen)]]
-  return final_relations
+  row_order,col_order = choose_orders(L)
+  return (len(L[0]) - compute_rank2(L,row_order,col_order))
 
 @parallel
 def para_FZ_subrels(gen_list,param_list,g,r,markings=(),moduli_type=MODULI_ST):
