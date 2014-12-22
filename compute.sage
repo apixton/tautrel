@@ -30,7 +30,7 @@ def compute_betti_C(g,r,n=0):
 def compute_betti_C_unsym(g,r,n=0):
   ans = log_func(betti_C_unsym,g,r,n)
 
-def compute_betti-C_general(g,r,markings=()):
+def compute_betti_C_general(g,r,markings=()):
   ans = log_func(betti_C_general,g,r,markings)
 
 def compute_para_betti_C(p,g,r,n=0):
