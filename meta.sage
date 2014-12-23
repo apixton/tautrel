@@ -59,3 +59,9 @@ def log_func(f,*args):
   dlog(['results','history'],'%s = %s',comp,result)
   dlog('history','finished computing %s: %s sec, %s MB',comp,floor(end_time-start_time),end_memory-start_memory)
   return result
+
+def random_permutation(L):
+  l = len(L)
+  sigma = Permutations(l).random_element()
+  LL = [L[i-1] for i in sigma]
+  return LL

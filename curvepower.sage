@@ -376,6 +376,7 @@ def para_basic_C_rels(g,r,markings):
   input_list = []
   for S in Slist:
     input_list.append((gen_list,S,g,r,markings,MODULI_RT))
+  input_list = random_permutation(input_list)
   for FZ_rel_list in para_FZ_subrels(input_list):
     for FZ_rel in FZ_rel_list[1]:
       relation = [0 for i in range(C_ngen)]
@@ -593,6 +594,7 @@ def para_gorenstein_C(g,r1,n=0):
   for T1 in S1list:
     for T2 in S2list:
       input_list.append((T1,T2,g,r1,n))
+  input_list = random_permutation(input_list)
   result_list = list(para_pairing_dict(input_list))
   result_dict = {}
   for res in result_list:

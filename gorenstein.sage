@@ -750,6 +750,7 @@ def para_gorenstein(g,r1,markings=(),moduli_type=MODULI_ST):
   for T1 in S1list:
     for T2 in S2list:
       input_list.append((T1,T2,g,r1,markings,moduli_type))
+  input_list = random_permutation(input_list)
   result_list = list(para_pairing_dict(input_list))
   result_dict = {}
   for res in result_list:
