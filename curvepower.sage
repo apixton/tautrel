@@ -130,45 +130,93 @@ def list_all_FZ_C_general(g,r,markings,para=False):
   final_ngen = len(final_generators)
   final_relations = []
 
+  # Sometimes do codim one differently.
+  special_codim_one = False
+  if n >= 5 and markings[-1] == 2:
+    n1 = len([i for i in markings if i == 1])
+    n2 = len([i for i in markings if i == 2])
+    if n1 >= 2 and n2 >= 2:
+      special_codim_one = True
+
   for codim in range(0,max(min(r,n),1)):
-    new_markings = []
-    for i in range(n-2*codim):
-      if markings[i] == markings[i+2*codim]:
-        new_markings.append(markings[i])
-    max_old_value = max([0] + new_markings)
-    new_value = max_old_value + 1
-    while len(new_markings) < n-codim:
-      new_markings.append(new_value)
-      new_value += 1
-    new_markings = tuple(new_markings)
-    C_generators = capply(all_strata_C,r-codim,new_markings)
-    C_ngen = len(C_generators)
-    if para:
-      C_relations = para_basic_C_rels(g,r-codim,new_markings)
+    if not (codim == 1 and special_codim_one):
+      new_markings = []
+      for i in range(n-2*codim):
+        if markings[i] == markings[i+2*codim]:
+          new_markings.append(markings[i])
+      max_old_value = max([0] + new_markings)
+      new_value = max_old_value + 1
+      while len(new_markings) < n-codim:
+        new_markings.append(new_value)
+        new_value += 1
+      new_markings = tuple(new_markings)
+      C_generators = capply(all_strata_C,r-codim,new_markings)
+      C_ngen = len(C_generators)
+      if para:
+        C_relations = para_basic_C_rels(g,r-codim,new_markings)
+      else:
+        C_relations = basic_C_rels(g,r-codim,new_markings)
     else:
-      C_relations = basic_C_rels(g,r-codim,new_markings)
+      new_markings_list = []
+      selector_dict = {}
+      if n1 > 2:
+        new_markings_list.append((n1-2)*[1] + n2*[2] + [3])
+        selector_dict[1,1] = (0,[[1],[2],[1,1]])
+      else:
+        selector_dict[1,1] = (0,[[2],[2],[1,1]])
+      if n2 != n1-1:
+        new_markings_list.append((n1-1)*[1] + (n2-1)*[2] + [3])
+        selector_dict[1,2] = (len(new_markings_list)-1,[[1],[2],[1,2]])
+      else:
+        selector_dict[1,2] = (0,[[2],[1],[1,2]])
+      if n2 > 2 and n1 != n2 and n2 != n1+1:
+        new_markings_list.append(n1*[1] + (n2-2)*[2] + [3])
+        selector_dict[2,2] = (len(new_markings_list)-1,[[1],[2],[2,2]])
+      elif n2 == 2:
+        selector_dict[2,2] = (selector_dict[1,2][0],[[1],[1],[2,2]])
+      elif n1 == n2:
+        selector_dict[2,2] = (0,[[2],[1],[2,2]])
+      elif n2 == n1+1:
+        selector_dict[2,2] = (selector_dict[1,2][0],[[2],[1],[2,2]])
+      for i in range(len(new_markings_list)):
+        new_markings_list[i] = tuple(new_markings_list[i])
+      C_generators_list = [capply(all_strata_C,r-codim,new_mark) for new_mark in new_markings_list]
+      C_ngen_list = [len(C_gens) for C_gens in C_generators_list]
+      if para:
+        C_relations_list = [para_basic_C_rels(g,r-codim,new_mark) for new_mark in new_markings_list]
+      else:
+        C_relations_list = [basic_C_rels(g,r-codim,new_mark) for new_mark in new_markings_list]
 
     for setpart in setpartlist:
       if len(setpart) != n-codim:
         continue
-      setpart2 = [[i] for i in new_markings if i <= max_old_value]
-      setpart3 = []
-      count = 0
-      for part in setpart:
-        if count < len(setpart2) and part == setpart2[count]:
-          count += 1
-        else:
-          setpart3.append(part)
+      if codim == 1 and special_codim_one:
+        for part in setpart:
+          if len(part) == 2:
+            i = selector_dict[tuple(part)][0]
+            glue_key = selector_dict[tuple(part)][1]
+            break
+        new_markings = new_markings_list[i]
+        C_generators = C_generators_list[i]
+        C_ngen = C_ngen_list[i]
+        C_relations = C_relations_list[i]
+      else:
+        setpart2 = [[i] for i in new_markings if i <= max_old_value]
+        setpart3 = []
+        count = 0
+        for part in setpart:
+          if count < len(setpart2) and part == setpart2[count]:
+            count += 1
+          else:
+            setpart3.append(part)
+        glue_key = [[i] for i in range(1,max_old_value+1)] + setpart3
       modified_C_relations = [[0 for i in range(final_ngen)] for j in range(len(C_relations))]
       for k in range(C_ngen):
         X = C_generators[k]
         strata = [X[0],[[[],i[1]] for i in X[1]]]
         for j in range(len(X[1])):
           for i in X[1][j][0]:
-            if i <= max_old_value:
-              strata[1][j][0].append(i)
-            else:
-              strata[1][j][0] += setpart3[i-max_old_value-1]
+            strata[1][j][0] += glue_key[i-1]
           strata[1][j][0].sort()
         strata[1].sort()
         for i in range(final_ngen):
