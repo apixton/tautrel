@@ -425,7 +425,12 @@ def para_basic_C_rels(g,r,markings):
   for S in Slist:
     input_list.append((gen_list,S,g,r,markings,MODULI_RT))
   input_list = random_permutation(input_list)
+  task_count = 0
+  announce_every = 100
   for FZ_rel_list in para_FZ_subrels(input_list):
+    task_count += 1
+    if task_count % announce_every == 0:
+      dlog('debug','completed %s tasks in para_basic_C_rels(%s,%s,%s)',task_count,g,r,markings)
     for FZ_rel in FZ_rel_list[1]:
       relation = [0 for i in range(C_ngen)]
       for i in range(ngen):
