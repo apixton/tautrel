@@ -27,11 +27,11 @@ def compute_para_goren2(g,n=0,moduli_type=MODULI_ST):
 def compute_betti_C(g,r,n=0):
   ans = log_func(betti_C,g,r,n)
 
-def compute_betti_C_unsym(g,r,n=0):
-  ans = log_func(betti_C_unsym,g,r,n)
+def compute_betti_C_unsym(p,g,r,n=0):
+  ans = log_func(betti_C_unsym,p,g,r,n)
 
-def compute_betti_C_general(g,r,markings=()):
-  ans = log_func(betti_C_general,g,r,markings)
+def compute_betti_C_general(p,g,r,markings=()):
+  ans = log_func(betti_C_general,p,g,r,markings)
 
 def compute_para_betti_C(p,g,r,n=0):
   ans = log_func(para_betti_C,p,g,r,n)
