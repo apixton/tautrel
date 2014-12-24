@@ -432,28 +432,32 @@ def para_basic_C_rels(g,r,markings):
       if C_generators[i] == strata:
         C_conversion[-1][0] = i
         break
-  C_relations = []
-  a1 = len(params)
+
+  a1 = len(gen_list)
   k1 = min(a1,100)
   dlog('debug','parallelizing %s tasks in para_basic_C_rels(%s,%s,%s)',k1,g,r,markings)
-  Slist = [params[floor(i*a1/k1):floor((i+1)*a1/k1)] for i in range(k1)]
+  Slist = [gen_list[floor(i*a1/k1):floor((i+1)*a1/k1)] for i in range(k1)]
   input_list = []
   for S in Slist:
-    input_list.append((gen_list,S,g,r,markings,MODULI_RT))
+    input_list.append((S,params,g,r,markings,MODULI_RT))
+
   input_list = random_permutation(input_list)
   task_count = 0
-  announce_every = 100
+  announce_every = 10
+
+  C_relations = [[0 for i in range(C_ngen)] for j in range(len(params))]
   for FZ_rel_list in para_FZ_subrels(input_list):
     task_count += 1
     if task_count % announce_every == 0:
       dlog('debug','completed %s tasks in para_basic_C_rels(%s,%s,%s)',task_count,g,r,markings)
-    for FZ_rel in FZ_rel_list[1]:
-      relation = [0 for i in range(C_ngen)]
-      for i in range(ngen):
-        j = C_conversion[i][0]
-        coeff = C_conversion[i][1]
-        relation[j] += coeff*FZ_rel[i]
-      C_relations.append(relation)
+    for i in range(len(FZ_rel_list[0][0][0])):
+      for num in range(len(gen_list)):
+        if gen_list[num] == FZ_rel_list[0][0][0][i]:
+          break
+      j = C_conversion[num][0]
+      coeff = C_conversion[num][1]
+      for ii in range(len(params)):
+        C_relations[ii][j] += coeff*FZ_rel_list[1][ii][i]
   return C_relations
 
 ######################### now gorenstein code
