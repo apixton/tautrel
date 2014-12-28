@@ -8,9 +8,41 @@ def capply(f,*args):
   global cache_dict
   if not cache_dict.has_key(f.func_name):
     cache_dict[f.func_name] = {}
-  if not cache_dict[f.func_name].has_key(args):
-    cache_dict[f.func_name][args] = apply(f,args)
+  elif cache_dict[f.func_name].has_key(args):
+    return cache_dict[f.func_name][args]
+  fc_list = ['choose_basic_rels','all_strata','partial_symmetrize_map',
+             #'single_insertion_pullback','single_insertion_pullback2',
+             #'single_kappa_multiple','single_psi_multiple',
+             'strata_invariant_lookup']
+  if f.func_name in fc_list:
+    return fcapply(f,*args)
+  cache_dict[f.func_name][args] = apply(f,args)
   return cache_dict[f.func_name][args]
+
+def fcapply(f,*args):
+  global cache_dict
+  if not cache_dict.has_key(f.func_name):
+    cache_dict[f.func_name] = {}
+  elif cache_dict[f.func_name].has_key(args):
+    return cache_dict[f.func_name][args]
+  index_dict = load('obj/index')
+  filename = 'obj/' + f.func_name + ':' + ':'.join(fixup_args(f,args))
+  add_key = False
+  if not index_dict.has_key(f.func_name):
+    add_key = True
+  elif index_dict[f.func_name].has_key(args):
+    ans = load(filename)
+    cache_dict[f.func_name][args] = ans
+    return ans
+  ans = apply(f,args)
+  cache_dict[f.func_name][args] = ans
+  save(ans,filename)
+  index_dict = load('obj/index')
+  if add_key:
+    index_dict[f.func_name] = {}
+  index_dict[f.func_name][args] = 0
+  save(index_dict,'obj/index')
+  return ans
 
 def dprint(str,*args):
   if ENABLE_DPRINT:
