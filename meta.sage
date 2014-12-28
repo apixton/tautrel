@@ -1,4 +1,5 @@
 import time
+import os.path
 
 def clear_cache():
   global cache_dict
@@ -25,23 +26,15 @@ def fcapply(f,*args):
     cache_dict[f.func_name] = {}
   elif cache_dict[f.func_name].has_key(args):
     return cache_dict[f.func_name][args]
-  index_dict = load('obj/index')
   filename = 'obj/' + f.func_name + ':' + ':'.join(fixup_args(f,args))
-  add_key = False
-  if not index_dict.has_key(f.func_name):
-    add_key = True
-  elif index_dict[f.func_name].has_key(args):
+  if os.path.isfile(filename + '.sobj'):
     ans = load(filename)
     cache_dict[f.func_name][args] = ans
     return ans
   ans = apply(f,args)
   cache_dict[f.func_name][args] = ans
-  save(ans,filename)
-  index_dict = load('obj/index')
-  if add_key:
-    index_dict[f.func_name] = {}
-  index_dict[f.func_name][args] = 0
-  save(index_dict,'obj/index')
+  if not os.path.isfile(filename + '.sobj'):
+    save(ans,filename)
   return ans
 
 def dprint(str,*args):
