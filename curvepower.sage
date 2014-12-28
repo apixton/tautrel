@@ -622,7 +622,7 @@ def gorenstein_C_unsym(g,r,d=0):
   return gor_betti(g,r,d)
 
 @parallel
-def para_pairing_dict(S1,S2,g,r1,n):
+def para_pairing_dict_C(S1,S2,g,r1,n):
   D = {}
   r2 = g-2+n-r1
   L1 = capply(all_strata_C,r1,tuple([1 for i in range(n)]))
@@ -668,7 +668,7 @@ def para_gorenstein_C(g,r1,n=0):
     for T2 in S2list:
       input_list.append((T1,T2,g,r1,n))
   input_list = random_permutation(input_list)
-  result_list = list(para_pairing_dict(input_list))
+  result_list = list(para_pairing_dict_C(input_list))
   result_dict = {}
   for res in result_list:
     result_dict.update(res[1])
