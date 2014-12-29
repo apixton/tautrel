@@ -38,12 +38,12 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
       dlog('debug','choose_basic_rels(%s,%s,%s,%s): checked %s newrels',g,r,n,mod_type_string(moduli_type),j)
   return answer
 
-def recursive_betti(g,r,markings=(),moduli_type=MODULI_ST):
+def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
   n = len(markings)
   if r > dim_form(g,n,moduli_type):
     return 0
   ngen = num_strata(g,r,markings,moduli_type)
-  dlog('debug','recursive_betti(%s,%s,%s,%s): %s gens',g,r,markings,mod_type_string(moduli_type),ngen)
+  dlog('debug','recursive_betti(%s,%s,%s,%s,%s): %s gens',p,g,r,markings,mod_type_string(moduli_type),ngen)
   relations = []
   partial_sym_map = capply(partial_symmetrize_map,g,r,markings,moduli_type)
   for rel in capply(choose_basic_rels,g,r,n,moduli_type):
@@ -92,15 +92,21 @@ def recursive_betti(g,r,markings=(),moduli_type=MODULI_ST):
                   relation.append([which_gen_list[num], x[1]])
               relation = simplify_sparse(relation)
               relations.append(relation)
-  dlog('debug','recursive_betti(%s,%s,%s,%s): %s rels',g,r,markings,mod_type_string(moduli_type),len(relations))
+  dlog('debug','recursive_betti(%s,%s,%s,%s,%s): %s rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
   relations = remove_duplicates2(relations)
-  dlog('debug','recursive_betti(%s,%s,%s,%s): %s distinct rels',g,r,markings,mod_type_string(moduli_type),len(relations))
+  dlog('debug','recursive_betti(%s,%s,%s,%s,%s): %s distinct rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
   rank = 0
   D = {}
   nrels = len(relations)
+  if p > 0:
+    KK = FiniteField(p)
+  else:
+    KK = QQ
   for i in range(nrels):
     for x in relations[i]:
-      D[i,x[0]] = x[1]
+      y = KK(x[1])
+      if y != 0:
+        D[i,x[0]] = y
   if nrels > 0:
     row_order,col_order = choose_orders_sparse(D,nrels,ngen)
     rank = compute_rank_sparse(D,row_order,col_order)
