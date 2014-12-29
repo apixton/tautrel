@@ -95,6 +95,10 @@ def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
   dlog('debug','recursive_betti(%s,%s,%s,%s,%s): %s rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
   relations = remove_duplicates2(relations)
   dlog('debug','recursive_betti(%s,%s,%s,%s,%s): %s distinct rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
+  count = 0
+  for rel in relations:
+    count += len(rel)
+  dlog('debug','recursive_betti(%s,%s,%s,%s,%s): %s nonzero entries',p,g,r,markings,mod_type_string(moduli_type),count)
   rank = 0
   D = {}
   nrels = len(relations)

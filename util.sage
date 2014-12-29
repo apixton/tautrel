@@ -92,7 +92,7 @@ def simplify_sparse(vec):
         last_index = None
       else:
         vec2[-1][1] += x[1]
-    else:
+    elif x[1] != 0:
       vec2.append(x)
       last_index = x[0]
   return vec2
