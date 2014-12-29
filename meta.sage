@@ -37,10 +37,6 @@ def fcapply(f,*args):
     save(ans,filename)
   return ans
 
-def dprint(str,*args):
-  if ENABLE_DPRINT:
-    print str % args
-
 def dlog(files,str,*args):
   if isinstance(files,list):
     filelist = files

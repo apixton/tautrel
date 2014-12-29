@@ -196,7 +196,6 @@ def possibly_new_FZ(g,r,n=0,moduli_type=MODULI_ST):
   m = 3*r-g-1-n
   if m < 0:
     return []
-  dprint("Start FZ (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   markings = tuple([1 for i in range(n)])
   ngen = num_strata(g,r,markings,moduli_type)
   relations = []
@@ -216,7 +215,6 @@ def possibly_new_FZ(g,r,n=0,moduli_type=MODULI_ST):
         if coeff != 0:
           relation.append([j,coeff])
       relations.append(relation)
-  dprint("End FZ (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   return relations
   
 

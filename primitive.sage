@@ -11,10 +11,9 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
     sym_possible_rels = possibly_new_FZ(g,r,n,moduli_type)
   if len(sym_possible_rels) == 0:
     return []
-  dprint("Start basic_rels (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   previous_rels = derived_rels(g,r,n,moduli_type)
   nrels = len(previous_rels)
-  dprint("%s gens, %s oldrels",sym_ngen,nrels)
+  dlog('debug','choose_basic_rels(%s,%s,%s,%s): %s gens, %s oldrels, %s possible newrels',g,r,n,mod_type_string(moduli_type),sym_ngen,nrels,len(sym_possible_rels))
   D = {}
   for i in range(nrels):
     for x in previous_rels[i]:
@@ -22,7 +21,6 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
   if nrels > 0:
     row_order,col_order = choose_orders_sparse(D,nrels,sym_ngen)
     previous_rank = compute_rank_sparse(D,row_order,col_order)
-    dprint("rank %s",previous_rank)
   else:
     previous_rank = 0
     row_order = []
@@ -36,25 +34,16 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
     if compute_rank_sparse(D,row_order,col_order) > previous_rank:
       answer.append(unsymmetrize_vec(sym_possible_rels[j],g,r,tuple(range(1,n+1)),moduli_type))
       previous_rank += 1
-    dprint("rank %s",previous_rank)
-  #if len(answer) > 0:
-  #print "%s,%s,%s: %s" % (g,r,n,len(answer))
-  dprint("End basic_rels (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
-  dprint("%s,%s,%s,%s: rank %s",g,r,n,moduli_type,sym_ngen-previous_rank)
-  #if moduli_type > -1:
-    #dsave("sparse-%s,%s,%s,%s|%s,%s,%s",g,r,n,moduli_type,len(answer),sym_ngen-previous_rank,floor(get_memory_usage()))
-  #if moduli_type >= 0 and sym_ngen-previous_rank != betti(g,r,tuple([1 for i in range(n)]),moduli_type):
-  #  dprint("ERROR: %s,%s,%s,%s",g,r,n,moduli_type)
-  #  return
+    if (j+1) % 5 == 0:
+      dlog('debug','choose_basic_rels(%s,%s,%s,%s): checked %s newrels',g,r,n,mod_type_string(moduli_type),j)
   return answer
 
 def recursive_betti(g,r,markings=(),moduli_type=MODULI_ST):
-  dprint("Start recursive_betti (%s,%s,%s,%s): %s",g,r,markings,moduli_type,floor(get_memory_usage()))
   n = len(markings)
   if r > dim_form(g,n,moduli_type):
     return 0
   ngen = num_strata(g,r,markings,moduli_type)
-  dprint("%s gens",ngen)
+  dlog('debug','recursive_betti(%s,%s,%s,%s): %s gens',g,r,n,mod_type_string(moduli_type),ngen)
   relations = []
   partial_sym_map = capply(partial_symmetrize_map,g,r,markings,moduli_type)
   for rel in capply(choose_basic_rels,g,r,n,moduli_type):
@@ -69,8 +58,6 @@ def recursive_betti(g,r,markings=(),moduli_type=MODULI_ST):
       rel2.append([partial_sym_map[x[0]], x[1]])
     rel2 = simplify_sparse(rel2)
     relations.append(rel2)
-  dprint("%s gens, %s rels so far",ngen,len(relations))
-  dprint("Middle recursive_betti (%s,%s,%s,%s): %s",g,r,markings,moduli_type,floor(get_memory_usage()))
   if moduli_type > MODULI_SM:
     for r0 in range(1,r):
       strata = capply(all_strata,g,r0,markings,moduli_type)
@@ -105,12 +92,9 @@ def recursive_betti(g,r,markings=(),moduli_type=MODULI_ST):
                   relation.append([which_gen_list[num], x[1]])
               relation = simplify_sparse(relation)
               relations.append(relation)
-  dprint("%s gens, %s rels",ngen,len(relations))
-  #dsave("sparse-%s-gens-%s-rels",ngen,len(relations))
-  dprint("Middle recursive_betti (%s,%s,%s,%s): %s",g,r,markings,moduli_type,floor(get_memory_usage()))
+  dlog('debug','recursive_betti(%s,%s,%s,%s): %s rels',g,r,n,mod_type_string(moduli_type),len(relations))
   relations = remove_duplicates2(relations)
-  dprint("%s gens, %s distinct rels",ngen,len(relations))
-  #dsave("sparse-%s-distinct-rels",len(relations))
+  dlog('debug','recursive_betti(%s,%s,%s,%s): %s distinct rels',g,r,n,mod_type_string(moduli_type),len(relations))
   rank = 0
   D = {}
   nrels = len(relations)
@@ -120,13 +104,11 @@ def recursive_betti(g,r,markings=(),moduli_type=MODULI_ST):
   if nrels > 0:
     row_order,col_order = choose_orders_sparse(D,nrels,ngen)
     rank = compute_rank_sparse(D,row_order,col_order)
-  #dsave("sparse-answer-%s",ngen-rank)
   return ngen - rank
 
 def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
   if r == 0:
     return []
-  dprint("Start pullback_derived (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   answer = []
   for n0 in range(n):
     if dim_form(g,n0,moduli_type) >= r:
@@ -150,11 +132,9 @@ def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
             for i in range(n-n0-k):
               rel2 = insertion_pullback(rel2,g,r,n0+k+i,vec2[i+1],moduli_type)
             answer.append(rel2)
-  dprint("End pullback_derived (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   return answer
 
 def interior_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
-  dprint("Start interior_derived (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   markings = tuple(range(1,n+1))
   answer = copy(capply(pullback_derived_rels,g,r,n,moduli_type))
   for r0 in range(r):
@@ -174,11 +154,9 @@ def interior_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
               rel2 = kappa_multiple(rel2,m,g,rcur,n,moduli_type)
               rcur += m
             answer.append(rel2)
-  dprint("End interior_derived (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   return answer
 
 def derived_rels(g,r,n=0,moduli_type=MODULI_ST):
-  dprint("Start derived (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   markings = tuple([1 for i in range(n)])
   generators = capply(all_strata,g,r,markings,moduli_type)
   ngen = len(generators)
@@ -226,7 +204,6 @@ def derived_rels(g,r,n=0,moduli_type=MODULI_ST):
             relation = simplify_sparse(relation)
             answer.append(relation)
   answer = remove_duplicates2(answer)
-  dprint("End derived (%s,%s,%s,%s): %s",g,r,n,moduli_type,floor(get_memory_usage()))
   return answer
 
 def list_num_new_rels(moduli_type=MODULI_ST):
