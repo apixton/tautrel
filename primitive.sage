@@ -99,21 +99,32 @@ def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
   for rel in relations:
     count += len(rel)
   dlog('debug','recursive_betti(%s,%s,%s,%s,%s): %s nonzero entries',p,g,r,markings,mod_type_string(moduli_type),count)
-  rank = 0
-  D = {}
+
   nrels = len(relations)
+  if nrels == 0:
+    return ngen
   if p > 0:
     KK = FiniteField(p)
   else:
     KK = QQ
+
+  M = Matrix(KK,nrels,ngen,sparse=True)
   for i in range(nrels):
     for x in relations[i]:
       y = KK(x[1])
       if y != 0:
-        D[i,x[0]] = y
-  if nrels > 0:
-    row_order,col_order = choose_orders_sparse(D,nrels,ngen)
-    rank = compute_rank_sparse(D,row_order,col_order)
+        M[i,x[0]] = y
+  rank = M.rank(gauss=False)
+
+  #D = {}
+  #for i in range(nrels):
+  #  for x in relations[i]:
+  #    y = KK(x[1])
+  #    if y != 0:
+  #      D[i,x[0]] = y
+  #row_order,col_order = choose_orders_sparse(D,nrels,ngen)
+  #rank = compute_rank_sparse(D,row_order,col_order)
+
   return ngen - rank
 
 def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
