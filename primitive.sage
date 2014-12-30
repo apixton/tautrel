@@ -35,7 +35,7 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
       answer.append(unsymmetrize_vec(sym_possible_rels[j],g,r,tuple(range(1,n+1)),moduli_type))
       previous_rank += 1
     if (j+1) % 5 == 0:
-      dlog('debug','choose_basic_rels(%s,%s,%s,%s): checked %s newrels',g,r,n,mod_type_string(moduli_type),j)
+      dlog('debug','choose_basic_rels(%s,%s,%s,%s): checked %s newrels',g,r,n,mod_type_string(moduli_type),j+1)
   return answer
 
 def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
