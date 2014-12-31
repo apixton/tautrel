@@ -145,6 +145,52 @@ def compute_rank_sparse2(D,m,n):
     S.remove(i)
     col_contents[j] = set()
 
+# assuming first m rows are reduced in unknown order, and m+1st row needs to be
+def reduce_last_row(D,m,n):
+  row_contents = [set() for i in range(m)]
+  col_contents = [set() for i in range(n)]
+  lastrow = set()
+  for x in D.keys():
+    if x[0] == m:
+      lastrow.add(x[1])
+      continue
+    row_contents[x[0]].add(x[1])
+    col_contents[x[1]].add(x[0])
+  if len(lastrow) == 0:
+    return True
+  if m == 0:
+    return False
+  S = set([j for j in range(n) if len(col_contents[j]) == 1])
+  while len(S) > 0:
+    j = S.pop()
+    i = col_contents[j].pop()
+    if D.has_key((m,j)) and D[m,j] != 0:
+      rat = -D[m,j]/D[i,j]
+      for jj in row_contents[i]:
+        if jj == j:
+          continue
+        if not D.has_key((m,jj)):
+          D[m,jj] = 0
+          lastrow.add(jj)
+        D[m,jj] += rat*D[i,jj]
+        if D[m,jj] == 0:
+          D.pop((m,jj))
+          lastrow.remove(jj)
+      D.pop((m,j))
+      lastrow.remove(j)
+      if len(lastrow) == 0:
+        return True
+    for jj in row_contents[i]:
+      if jj == j:
+        continue
+      col_contents[jj].remove(i)
+      l = len(col_contents[jj])
+      if l == 0:
+        S.remove(jj)
+      elif l == 1:
+        S.add(jj)
+  return False
+
 def choose_orders(L):
   rows = len(L)
   if rows == 0:

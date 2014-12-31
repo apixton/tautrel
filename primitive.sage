@@ -26,10 +26,14 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
   for j in range(len(sym_possible_rels)):
     for x in sym_possible_rels[j]:
       D[nrels,x[0]] = x[1]
-    nrels += 1
-    if compute_rank_sparse2(D,nrels,sym_ngen) > previous_rank:
-      answer.append(unsymmetrize_vec(sym_possible_rels[j],g,r,tuple(range(1,n+1)),moduli_type))
+    if not reduce_last_row(D,nrels,sym_ngen):
+      new_rel = []
+      for x in D.keys():
+        if x[0] == nrels:
+          new_rel.append([x[1],D[x]])
+      answer.append(unsymmetrize_vec(new_rel,g,r,tuple(range(1,n+1)),moduli_type))
       previous_rank += 1
+    nrels += 1
     if (j+1) % 5 == 0:
       dlog('debug','choose_basic_rels(%s,%s,%s,%s): checked %s newrels',g,r,n,mod_type_string(moduli_type),j+1)
   return answer
