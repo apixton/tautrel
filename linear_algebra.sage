@@ -86,16 +86,24 @@ def compute_rank_sparse2(D,m,n):
 
   S = set([i for i in range(m) if len(row_contents[i]) > 0])
 
+  bestnewi = None
+
   while True:
-    i = None
-    ilen = n+1
-    for ii in S:
-      l = len(row_contents[ii])
-      if l > 0 and l < ilen:
-        i = ii
-        ilen = l
-    if i == None:
-      return count
+    if bestnewi != None:
+      i = bestnewi
+      ilen = bestnewlen
+    else:
+      i = None
+      ilen = n+1
+      for ii in S:
+        l = len(row_contents[ii])
+        if l > 0 and l < ilen:
+          i = ii
+          ilen = l
+      if i == None:
+        return count
+    bestnewi = None
+    bestnewlen = ilen + 1
     count += 1
     j = None
     jlen = m+1
@@ -125,8 +133,12 @@ def compute_rank_sparse2(D,m,n):
         continue
       D.pop((ii,j))
       row_contents[ii].remove(j)
-      if len(row_contents[ii]) == 0:
+      l = len(row_contents[ii])
+      if l == 0:
         S.remove(ii)
+      elif l < bestnewlen:
+        bestnewlen = l
+        bestnewi = ii
     for k in row_contents[i]:
       col_contents[k].remove(i)
     row_contents[i] = set()
