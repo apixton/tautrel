@@ -76,6 +76,63 @@ def compute_rank_sparse(D,row_order,col_order):
       col_contents[j].remove(ii)
   return count
 
+def compute_rank_sparse2(D,m,n):
+  count = 0
+  row_contents = [set() for i in range(m)]
+  col_contents = [set() for i in range(n)]
+  for x in D.keys():
+    row_contents[x[0]].add(x[1])
+    col_contents[x[1]].add(x[0])
+
+  S = set([i for i in range(m) if len(row_contents[i]) > 0])
+
+  while True:
+    i = None
+    ilen = n+1
+    for ii in S:
+      l = len(row_contents[ii])
+      if l > 0 and l < ilen:
+        i = ii
+        ilen = l
+    if i == None:
+      return count
+    count += 1
+    j = None
+    jlen = m+1
+    for jj in row_contents[i]:
+      l = len(col_contents[jj])
+      if l < jlen:
+        j = jj
+        jlen = l
+    for k in row_contents[i]:
+      if k == j:
+        continue
+      rat = -D[i,k]/D[i,j]
+      for ii in col_contents[j]:
+        if ii == i:
+          continue
+        if not D.has_key((ii,k)):
+          D[ii,k] = 0
+          row_contents[ii].add(k)
+          col_contents[k].add(ii)
+        D[ii,k] += rat*D[ii,j]
+        if D[ii,k] == 0:
+          D.pop((ii,k))
+          row_contents[ii].remove(k)
+          col_contents[k].remove(ii)
+    for ii in col_contents[j]:
+      if ii == i:
+        continue
+      D.pop((ii,j))
+      row_contents[ii].remove(j)
+      if len(row_contents[ii]) == 0:
+        S.remove(ii)
+    for k in row_contents[i]:
+      col_contents[k].remove(i)
+    row_contents[i] = set()
+    S.remove(i)
+    col_contents[j] = set()
+
 def choose_orders(L):
   rows = len(L)
   if rows == 0:
@@ -112,3 +169,49 @@ def compute_rank2(L,row_order,col_order):
     for ii in T:
       L[ii][j] = 0
   return count
+
+def ranktest1(L,p=0):
+  if p > 0:
+    KK = FiniteField(p)
+  else:
+    KK = QQ
+  m = len(L)
+  n = 1 + max(max(x[0] for x in rel) for rel in L)
+  D = {}
+  for i in range(m):
+    for x in L[i]:
+      y = KK(x[1])
+      if y != 0:
+        D[i,x[0]] = y
+  row_order,col_order = choose_orders_sparse(D,m,n)
+  return compute_rank_sparse(D,row_order,col_order)
+
+def ranktest2(L,p=0):
+  if p > 0:
+    KK = FiniteField(p)
+  else:
+    KK = QQ
+  m = len(L)
+  n = 1 + max(max(x[0] for x in rel) for rel in L)
+  D = {}
+  for i in range(m):
+    for x in L[i]:
+      y = KK(x[1])
+      if y != 0:
+        D[i,x[0]] = y
+  return compute_rank_sparse2(D,m,n)
+
+def ranktestsage(L,p=0):
+  if p > 0:
+    KK = FiniteField(p)
+  else:
+    KK = QQ
+  m = len(L)
+  n = 1 + max(max(x[0] for x in rel) for rel in L)
+  M = Matrix(KK,m,n,sparse=True)
+  for i in range(m):
+    for x in L[i]:
+      y = KK(x[1])
+      if y != 0:
+        M[i,x[0]] = y
+  return M.rank()

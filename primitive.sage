@@ -19,19 +19,15 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
     for x in previous_rels[i]:
       D[i,x[0]] = x[1]
   if nrels > 0:
-    row_order,col_order = choose_orders_sparse(D,nrels,sym_ngen)
-    previous_rank = compute_rank_sparse(D,row_order,col_order)
+    previous_rank = compute_rank_sparse2(D,nrels,sym_ngen)
   else:
     previous_rank = 0
-    row_order = []
-    col_order = list(range(sym_ngen))
   answer = []
   for j in range(len(sym_possible_rels)):
     for x in sym_possible_rels[j]:
       D[nrels,x[0]] = x[1]
-    row_order.append(nrels)
     nrels += 1
-    if compute_rank_sparse(D,row_order,col_order) > previous_rank:
+    if compute_rank_sparse2(D,nrels,sym_ngen) > previous_rank:
       answer.append(unsymmetrize_vec(sym_possible_rels[j],g,r,tuple(range(1,n+1)),moduli_type))
       previous_rank += 1
     if (j+1) % 5 == 0:
@@ -108,22 +104,13 @@ def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
   else:
     KK = QQ
 
-  M = Matrix(KK,nrels,ngen,sparse=True)
+  D = {}
   for i in range(nrels):
     for x in relations[i]:
       y = KK(x[1])
       if y != 0:
-        M[i,x[0]] = y
-  rank = M.rank(gauss=False)
-
-  #D = {}
-  #for i in range(nrels):
-  #  for x in relations[i]:
-  #    y = KK(x[1])
-  #    if y != 0:
-  #      D[i,x[0]] = y
-  #row_order,col_order = choose_orders_sparse(D,nrels,ngen)
-  #rank = compute_rank_sparse(D,row_order,col_order)
+        D[i,x[0]] = y
+  rank = compute_rank_sparse2(D,nrels,ngen)
 
   return ngen - rank
 
