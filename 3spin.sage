@@ -200,7 +200,7 @@ def possibly_new_FZ(g,r,n=0,moduli_type=MODULI_ST):
   ngen = num_strata(g,r,markings,moduli_type)
   relations = []
   for i in range(m+1):
-    if m-i % 2 == 1:
+    if (m-i) % 2 == 1:
       continue
     for sigma in Partitions(i):
       if len([j for j in sigma if j%3 != 1]) > 0:
