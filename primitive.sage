@@ -11,6 +11,7 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
     sym_possible_rels = possibly_new_FZ(g,r,n,moduli_type)
   if len(sym_possible_rels) == 0:
     return []
+  dlog('debug','choose_basic_rels(%s,%s,%s,%s): %s gens',g,r,n,mod_type_string(moduli_type),sym_ngen)
   previous_rels = derived_rels(g,r,n,moduli_type)
   nrels = len(previous_rels)
   dlog('debug','choose_basic_rels(%s,%s,%s,%s): %s gens, %s oldrels, %s possible newrels',g,r,n,mod_type_string(moduli_type),sym_ngen,nrels,len(sym_possible_rels))
@@ -22,6 +23,7 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
     previous_rank = compute_rank_sparse2(D,nrels,sym_ngen)
   else:
     previous_rank = 0
+  dlog('debug','choose_basic_rels(%s,%s,%s,%s): initial rank is %s',g,r,n,mod_type_string(moduli_type),previous_rank)
   answer = []
   for j in range(len(sym_possible_rels)):
     for x in sym_possible_rels[j]:
@@ -35,7 +37,8 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
       previous_rank += 1
     nrels += 1
     if (j+1) % 5 == 0:
-      dlog('debug','choose_basic_rels(%s,%s,%s,%s): checked %s newrels',g,r,n,mod_type_string(moduli_type),j+1)
+      dlog('debug','choose_basic_rels(%s,%s,%s,%s): checked %s rels',g,r,n,mod_type_string(moduli_type),j+1)
+  dlog('debug','choose_basic_rels(%s,%s,%s,%s): found %s newrels',g,r,n,mod_type_string(moduli_type),len(answer))
   return answer
 
 def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
