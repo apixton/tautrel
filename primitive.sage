@@ -41,6 +41,40 @@ def choose_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
   dlog('debug','choose_basic_rels(%s,%s,%s,%s): found %s newrels',g,r,n,mod_type_string(moduli_type),len(answer))
   return answer
 
+def assess_basic_rels(g,r,n=0,moduli_type=MODULI_ST):
+  if 3*r < g+n+1:
+    return []
+  sym_ngen = num_strata(g,r,tuple([1 for i in range(n)]),moduli_type)
+  if moduli_type == MODULI_SMALL and r > dim_form(g,n,MODULI_SM):
+    sym_possible_rels = [[[i,1]] for i in range(sym_ngen)]
+  else:
+    sym_possible_rels = possibly_new_FZ(g,r,n,moduli_type)
+  if len(sym_possible_rels) == 0:
+    return []
+  dlog('debug','assess_basic_rels(%s,%s,%s,%s): %s gens',g,r,n,mod_type_string(moduli_type),sym_ngen)
+  previous_rels = derived_rels(g,r,n,moduli_type)
+  nrels = len(previous_rels)
+  dlog('debug','assess_basic_rels(%s,%s,%s,%s): %s gens, %s oldrels, %s possible newrels',g,r,n,mod_type_string(moduli_type),sym_ngen,nrels,len(sym_possible_rels))
+  D = {}
+  for i in range(nrels):
+    for x in previous_rels[i]:
+      D[i,x[0]] = x[1]
+  if nrels > 0:
+    previous_rank = compute_rank_sparse2(D,nrels,sym_ngen)
+  else:
+    previous_rank = 0
+  dlog('debug','assess_basic_rels(%s,%s,%s,%s): initial rank is %s',g,r,n,mod_type_string(moduli_type),previous_rank)
+  MM = Matrix(QQ,len(sym_possible_rels),sym_ngen)
+  for j in range(len(sym_possible_rels)):
+    DD = copy(D)
+    for x in sym_possible_rels[j]:
+      DD[nrels,x[0]] = x[1]
+    _ = reduce_last_row(DD,nrels,sym_ngen)
+    for i in range(sym_ngen):
+      if DD.has_key((nrels,i)):
+        MM[j,i] = DD[nrels,i]
+  return list(MM.kernel().basis())
+
 def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
   n = len(markings)
   if r > dim_form(g,n,moduli_type):

@@ -18,6 +18,9 @@ def compute_recursive_betti2(p,g,r,markings=(),moduli_type=MODULI_ST):
 def compute_num_new_rels(g,r,n,moduli_type=MODULI_ST):
   ans = log_func(num_new_rels,g,r,n,moduli_type)
 
+def compute_assess_new_rels(g,r,n,moduli_type=MODULI_ST):
+  ans = log_func(assess_basic_rels,g,r,n,moduli_type)
+
 def compute_goren(g,n=0,moduli_type=MODULI_ST):
   d = dim_form(g,n,moduli_type)
   for r in range(0,floor(d/2)+1):
