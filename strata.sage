@@ -499,6 +499,7 @@ def unpurify_map(g,r,markings=(),moduli_type=MODULI_ST):
   return unpurify
 
 def all_strata(g,r,markings=(),moduli_type=MODULI_ST):
+  dlog('debug','all_strata(%s,%s,%s,%s): begin',g,r,markings,mod_type_string(moduli_type))
   mod_size = moduli_type + 1
   if moduli_type == MODULI_SMALL:
     mod_size = MODULI_SM + 1
@@ -536,6 +537,7 @@ def all_strata(g,r,markings=(),moduli_type=MODULI_ST):
   for G in combined_list:
     G.compute_degree_vec()
     G.set_target_parity()
+  dlog('debug','all_strata(%s,%s,%s,%s): %s gens',g,r,markings,mod_type_string(moduli_type),len(combined_list))
   return combined_list
 
 def all_pure_strata(g,r,markings=(),moduli_type=MODULI_ST):
