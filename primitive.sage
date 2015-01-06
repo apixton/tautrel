@@ -121,6 +121,81 @@ def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
 
   return ngen - rank
 
+def recursive_betti2(p,g,r,markings=(),moduli_type=MODULI_ST):
+  n = len(markings)
+  if r > dim_form(g,n,moduli_type):
+    return 0
+  ngen = num_strata(g,r,markings,moduli_type)
+  dlog('debug','recursive_betti2(%s,%s,%s,%s,%s): %s gens',p,g,r,markings,mod_type_string(moduli_type),ngen)
+  relations = []
+  for FZ_param in FZ_param_list(3*r-g-1,markings):
+    relation = []
+    for j in range(ngen):
+      coeff = capply(FZ_coeff,j,FZ_param,g,r,markings,moduli_type)
+      if coeff != 0:
+        relation.append([j,coeff])
+    relations.append(relation)
+  dlog('debug','recursive_betti2(%s,%s,%s,%s,%s): %s interior rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
+  if moduli_type > MODULI_SM:
+    for r0 in range(1,r):
+      strata = capply(all_strata,g,r0,markings,moduli_type)
+      for G in strata:
+        vertex_orbits = graph_count_automorphisms(G,True)
+        for i in [orbit[0] for orbit in vertex_orbits]:
+          good = True
+          for j in range(G.M.ncols()):
+            if R(G.M[i,j][0]) != G.M[i,j]:
+              good = False
+              break
+          if good:
+            g2 = G.M[i,0][0]
+            if 3*(r-r0) < g2 + 1:
+              continue
+            d = G.degree(i)
+            if dim_form(g2,d,moduli_type) < r-r0:
+              continue
+            strata2 = capply(all_strata,g2,r-r0,tuple(range(1,d+1)),moduli_type)
+            which_gen_list = [-1 for num in range(len(strata2))]
+            for num in range(len(strata2)):
+              G_copy = Graph(G.M)
+              G_copy.replace_vertex_with_graph(i,strata2[num])
+              which_gen_list[num] = num_of_stratum(G_copy,g,r,markings,moduli_type)
+            rel_list = copy(capply(choose_basic_rels,g2,r-r0,d,moduli_type))
+            rel_list += capply(interior_derived_rels,g2,r-r0,d,moduli_type)
+            for rel0 in rel_list:
+              relation = []
+              for x in rel0:
+                num = x[0]
+                if which_gen_list[num] != -1:
+                  relation.append([which_gen_list[num], x[1]])
+              relation = simplify_sparse(relation)
+              relations.append(relation)
+  dlog('debug','recursive_betti2(%s,%s,%s,%s,%s): %s rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
+  relations = remove_duplicates2(relations)
+  dlog('debug','recursive_betti2(%s,%s,%s,%s,%s): %s distinct rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
+  count = 0
+  for rel in relations:
+    count += len(rel)
+  dlog('debug','recursive_betti2(%s,%s,%s,%s,%s): %s nonzero entries',p,g,r,markings,mod_type_string(moduli_type),count)
+
+  nrels = len(relations)
+  if nrels == 0:
+    return ngen
+  if p > 0:
+    KK = FiniteField(p)
+  else:
+    KK = QQ
+
+  D = {}
+  for i in range(nrels):
+    for x in relations[i]:
+      y = KK(x[1])
+      if y != 0:
+        D[i,x[0]] = y
+  rank = compute_rank_sparse2(D,nrels,ngen)
+
+  return ngen - rank
+
 def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
   if r == 0:
     return []

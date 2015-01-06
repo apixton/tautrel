@@ -12,6 +12,9 @@ def compute_para_betti2(p,g,r,n=0,moduli_type=MODULI_ST):
 def compute_recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
   ans = log_func(recursive_betti,p,g,r,markings,moduli_type)
 
+def compute_recursive_betti2(p,g,r,markings=(),moduli_type=MODULI_ST):
+  ans = log_func(recursive_betti2,p,g,r,markings,moduli_type)
+
 def compute_num_new_rels(g,r,n,moduli_type=MODULI_ST):
   ans = log_func(num_new_rels,g,r,n,moduli_type)
 
