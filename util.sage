@@ -65,14 +65,34 @@ def submultisets_with_mults(symlist,l):
   if l < 0 or l > len(symlist):
     return []
   if len(symlist) == 0:
-    return [[[],1]]
+    return [[[],1,list(symlist)]]
   ans = []
   first_part = symlist[0]
   first_num = sum(1 for i in symlist if i == first_part)
   for i in range(first_num+1):
     trunc_list = symlist[first_num:]
     for x in submultisets_with_mults(trunc_list,l-i):
-      ans.append([[first_part]*i+x[0],x[1]*binomial(first_num,i)])
+      ans.append([[first_part]*i+x[0],x[1]*binomial(first_num,i),[first_part]*(first_num-i)+x[2]])
+  return ans
+
+def injections_with_mults(L1,L2):
+  if len(L1) > len(L2):
+    return []
+  if len(L1) == 0:
+    return [[[],1,L2]]
+  ans = []
+  first_part = L1[0]
+  first_num = 0
+  for part in L1:
+    if part != first_part:
+      break
+    first_num += 1
+  LL1 = L1[first_num:]
+  fact = factorial(first_num)
+  for x in submultisets_with_mults(L2,first_num):
+    partial_inj = [[first_part,a] for a in x[0]]
+    for y in injections_with_mults(LL1,x[2]):
+      ans.append([partial_inj + y[0],fact*x[1]*y[1],y[2]])
   return ans
 
 def remove_duplicates(L):
