@@ -27,16 +27,22 @@ def dual_C_coeff(i,j,parity):
 def kappa_coeff(sigma,kappa_0,target_partition):
   total = 0
   num_ones = sum(1 for i in sigma if i == 1)
-  for i in range(0,num_ones+1):
-    for injection in Permutations(range(len(target_partition)),len(sigma)-i):
-      term = binomial(num_ones,i)*binomial(kappa_0 + len(target_partition) + i-1, i)*factorial(i)
-      for j in range(len(sigma)-i):
-        term *= C_coeff(sigma[j+i],target_partition[injection[j]])
-      for j in range(len(target_partition)):
-        if j in injection:
-          continue
-        term *= C_coeff(0,target_partition[j])
-      total += term
+  for injection in Permutations(range(len(target_partition)),len(sigma)-num_ones):
+    comp_part = [target_partition[j] for j in range(len(target_partition)) if not j in injection]
+    for i in range(0,num_ones+1):
+      for x in submultisets_with_mults(comp_part,num_ones-i):
+        term = binomial(num_ones,i)*binomial(kappa_0 + len(target_partition) + i-1, i)*factorial(i)
+        term *= x[1]*factorial(num_ones-i)
+        for j in range(len(sigma)-num_ones):
+          term *= C_coeff(sigma[j+num_ones],target_partition[injection[j]])
+        cur_loc = 0
+        for a in comp_part:
+          if cur_loc < len(x[0]) and a == x[0][cur_loc]:
+            cur_loc += 1
+            term *= C_coeff(1,a)
+          else:
+            term *= C_coeff(0,a)
+        total += term
   total = (-1)^(len(target_partition)+len(sigma))*total/aut(list(target_partition))
   return total
 

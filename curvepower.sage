@@ -123,6 +123,30 @@ def basic_C_rels(g,r,markings):
     C_relations.append(relation)
   return C_relations
 
+def fake_betti_C(g,r,markings):
+  setpartlist = setparts(markings)
+  n = len(markings)
+  final_ngen = len(capply(all_strata_C,r,markings))
+  count = 0
+  for setpart in setpartlist:
+    nn = len(setpart)
+    rr = r - n + nn
+    if rr <= 0:
+      continue
+    if 3*rr < g + 1:
+      continue
+    new_markings = []
+    cur_part = None
+    cur_num = 0
+    for part in setpart:
+      if part != cur_part:
+        cur_num += 1
+        cur_part = part
+      new_markings.append(cur_num)
+    new_markings = tuple(new_markings)
+    count += len(FZ_param_list(3*rr-g-1,new_markings))
+  return final_ngen - count
+
 def list_all_FZ_C_general(g,r,markings,para=False):
   setpartlist = setparts(markings)
   n = len(markings)

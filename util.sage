@@ -61,6 +61,20 @@ def subsequences(seq,l):
     answer.append([seq[i] for i in range(m) if vec[i] == 1])
   return answer
 
+def submultisets_with_mults(symlist,l):
+  if l < 0 or l > len(symlist):
+    return []
+  if len(symlist) == 0:
+    return [[[],1]]
+  ans = []
+  first_part = symlist[0]
+  first_num = sum(1 for i in symlist if i == first_part)
+  for i in range(first_num+1):
+    trunc_list = symlist[first_num:]
+    for x in submultisets_with_mults(trunc_list,l-i):
+      ans.append([[first_part]*i+x[0],x[1]*binomial(first_num,i)])
+  return ans
+
 def remove_duplicates(L):
   LL = []
   for elt in L:
