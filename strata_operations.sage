@@ -79,39 +79,39 @@ def convert_vector_to_pushforward_basis(vec,g,r,markings=(),moduli_type=MODULI_S
         vec2[x[0]] += x[1]*vec[i]
   return vec2
 
-def kappa_multiple(vec,which_kappa,g,r,n=0,moduli_type=MODULI_ST):
+def kappa_multiple(vec,which_kappa,g,r,n=0,moduli_type=MODULI_ST,special_top=False):
   vec2 = []
   for x in vec:
-    for y in capply(single_kappa_multiple,x[0],which_kappa,g,r,n,moduli_type):
+    for y in capply(single_kappa_multiple,x[0],which_kappa,g,r,n,moduli_type,special_top):
       vec2.append([y[0], x[1]*y[1]])
   vec2 = simplify_sparse(vec2) 
   return vec2
 
-def psi_multiple(vec,which_psi,g,r,n=0,moduli_type=MODULI_ST):
+def psi_multiple(vec,which_psi,g,r,n=0,moduli_type=MODULI_ST,special_top=False):
   vec2 = []
   for x in vec:
-    for y in capply(single_psi_multiple,x[0],which_psi,g,r,n,moduli_type):
+    for y in capply(single_psi_multiple,x[0],which_psi,g,r,n,moduli_type,special_top):
       vec2.append([y[0], x[1]*y[1]])
   vec2 = simplify_sparse(vec2)
   return vec2
 
-def insertion_pullback(vec,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
+def insertion_pullback(vec,g,r,n=0,new_mark=1,moduli_type=MODULI_ST,special_top=False):
   vec2 = []
   for x in vec:
-    for y in capply(single_insertion_pullback,x[0],g,r,n,new_mark,moduli_type):
+    for y in capply(single_insertion_pullback,x[0],g,r,n,new_mark,moduli_type,special_top):
       vec2.append([y[0], x[1]*y[1]])
   vec2 = simplify_sparse(vec2)
   return vec2
 
-def insertion_pullback2(vec,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
+def insertion_pullback2(vec,g,r,n=0,new_mark=1,moduli_type=MODULI_ST,special_top=False):
   vec2 = []
   for x in vec:
-    for y in capply(single_insertion_pullback2,x[0],g,r,n,new_mark,moduli_type):
+    for y in capply(single_insertion_pullback2,x[0],g,r,n,new_mark,moduli_type,special_top):
       vec2.append([y[0], x[1]*y[1]])
   vec2 = simplify_sparse(vec2)
   return vec2
 
-def single_psi_multiple(num,which_psi,g,r,n=0,moduli_type=MODULI_ST):
+def single_psi_multiple(num,which_psi,g,r,n=0,moduli_type=MODULI_ST,special_top=False):
   markings = tuple(range(1,n+1))
   G = single_stratum(num,g,r,markings,moduli_type)
   answer = []
@@ -131,11 +131,11 @@ def single_psi_multiple(num,which_psi,g,r,n=0,moduli_type=MODULI_ST):
       if dim_used < dim_form(G.M[i,0][0],deg,moduli_type):
         GG = Graph(G.M)
         GG.M[i,good_j] += X
-        answer.append((num_of_stratum(GG,g,r+1,markings,moduli_type),1))
+        answer.append((num_of_stratum(GG,g,r+1,markings,moduli_type,special_top),1))
       break
   return answer
 
-def single_kappa_multiple(num,which_kappa,g,r,n=0,moduli_type=MODULI_ST):
+def single_kappa_multiple(num,which_kappa,g,r,n=0,moduli_type=MODULI_ST,special_top=False):
   markings = tuple(range(1,n+1))
   G = single_stratum(num,g,r,markings,moduli_type)
   answer = []
@@ -150,13 +150,13 @@ def single_kappa_multiple(num,which_kappa,g,r,n=0,moduli_type=MODULI_ST):
     if dim_used + which_kappa <= dim_form(G.M[i,0][0],deg,moduli_type):
       GG = Graph(G.M)
       GG.M[i,0] += X^which_kappa
-      answer.append((num_of_stratum(GG,g,r+which_kappa,markings,moduli_type),1))
+      answer.append((num_of_stratum(GG,g,r+which_kappa,markings,moduli_type,special_top),1))
       for j in range(1,r+1):
         if G.M[i,0][j] > 0:
           GG = Graph(G.M)
           GG.M[i,0] += X^(j+which_kappa)
           GG.M[i,0] -= X^j
-          answer.append((num_of_stratum(GG,g,r+which_kappa,markings,moduli_type),-G.M[i,0][j]))
+          answer.append((num_of_stratum(GG,g,r+which_kappa,markings,moduli_type,special_top),-G.M[i,0][j]))
   return answer
 
 # Only doing this for markings=range(1,n+1) right now.
@@ -195,7 +195,7 @@ def single_kappa_psi_multiple(num,kappa_partition,psi_exps,g,r,n=0,moduli_type=M
     answer.append((num_of_stratum(GGG,g,rnew,markings,moduli_type), 1))
   return answer
 
-def single_insertion_pullback(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
+def single_insertion_pullback(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST,special_top=False):
   markings = tuple(range(1,n+1))
   new_markings = tuple(range(1,n+2))
   G = single_stratum(num,g,r,markings,moduli_type)
@@ -206,13 +206,13 @@ def single_insertion_pullback(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
       if GG.M[0,j][0] >= new_mark:
         GG.M[0,j] += 1
     GG.add_edge(i,0,new_mark)
-    answer.append((num_of_stratum(GG,g,r,new_markings,moduli_type), 1))
+    answer.append((num_of_stratum(GG,g,r,new_markings,moduli_type,special_top), 1))
     for j in range(1,r+1):
       for k in range(GG.M[i,0][j]):
         GGG = Graph(GG.M)
         GGG.M[i,0] -= X^j
         GGG.M[i,-1] += j*X
-        answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type), -1))
+        answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type,special_top), -1))
     if moduli_type <= MODULI_SM:
       continue
     for j in range(1,G.M.ncols()):
@@ -228,7 +228,7 @@ def single_insertion_pullback(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
           row2[-1] = 1
           GGG.split_vertex(i,row1,row2)
           GGG.M[-2,-1] += (x-1)*X
-          answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type), -1))
+          answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type,special_top), -1))
       if G.M[i,j][0] == 2:
         if G.M[i,j][1] >= 1 or G.M[i,j][2] >= 1:
           x = G.M[i,j][1]
@@ -244,16 +244,16 @@ def single_insertion_pullback(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
             GGG = Graph(GG.M)
             GGG.split_vertex(i,row1,row2)
             GGG.M[-2,-1] += (y-1)*X
-            answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type), -1))
+            answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type,special_top), -1))
           if x >= 1:
             row1[j] = 1 + y*X
             GGG = Graph(GG.M)
             GGG.split_vertex(i,row1,row2)
             GGG.M[-2,-1] += (x-1)*X
-            answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type), -1))
+            answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type,special_top), -1))
   return answer
 
-def single_insertion_pullback2(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
+def single_insertion_pullback2(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST,special_top=False):
   markings = tuple(range(1,n+1))
   new_markings = tuple(range(1,n+2))
   G = single_stratum(num,g,r,markings,MODULI_SMALL)
@@ -264,13 +264,13 @@ def single_insertion_pullback2(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
       if GG.M[0,j][0] >= new_mark:
         GG.M[0,j] += 1
     GG.add_edge(i,0,new_mark)
-    answer.append((num_of_stratum(GG,g,r,new_markings,moduli_type), 1))
+    answer.append((num_of_stratum(GG,g,r,new_markings,moduli_type,special_top), 1))
     for j in range(1,r+1):
       for k in range(GG.M[i,0][j]):
         GGG = Graph(GG.M)
         GGG.M[i,0] -= X^j
         GGG.M[i,-1] += j*X
-        answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type), -1))
+        answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type,special_top), -1))
     if moduli_type <= MODULI_SM:
       continue
     for j in range(1,G.M.ncols()):
@@ -286,7 +286,7 @@ def single_insertion_pullback2(num,g,r,n=0,new_mark=1,moduli_type=MODULI_ST):
           row2[-1] = 1
           GGG.split_vertex(i,row1,row2)
           GGG.M[-2,-1] += (x-1)*X
-          answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type), -1))
+          answer.append((num_of_stratum(GGG,g,r,new_markings,moduli_type,special_top), -1))
   return answer
 
 def symmetrize_map(g,r,markings=(),moduli_type=MODULI_ST):

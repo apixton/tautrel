@@ -155,20 +155,57 @@ def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
 
   return ngen - rank
 
+def fix_globals():
+  global TOP_g
+  global TOP_r
+  global TOP_markings
+  global TOP_new_markings
+  global TOP_moduli_type
+  TOP_g = None
+  TOP_r = None
+  TOP_markings = None
+  TOP_new_markings = None
+  TOP_moduli_type = None
+
 def recursive_betti2(p,g,r,markings=(),moduli_type=MODULI_ST):
+  global TOP_g
+  global TOP_r
+  global TOP_markings
+  global TOP_new_markings
+  global TOP_moduli_type
+  TOP_g = g
+  TOP_r = r
+  n = len(markings)
+  TOP_markings = tuple([i+1 for i in range(n)])
+  TOP_new_markings = markings
+  TOP_moduli_type = moduli_type
   n = len(markings)
   if r > dim_form(g,n,moduli_type):
+    fix_globals()
     return 0
   ngen = num_strata(g,r,markings,moduli_type)
   dlog('debug','recursive_betti2(%s,%s,%s,%s,%s): %s gens',p,g,r,markings,mod_type_string(moduli_type),ngen)
   relations = []
   for FZ_param in FZ_param_list(3*r-g-1,markings):
+    good = True
+    for j in FZ_param[0]:
+      if (j%3) != 1:
+        good = False
+    for j in FZ_param[1]:
+      for jj in j[1]:
+        if jj != 1:
+          good = False
+    if not good:
+      continue
+    print FZ_param
     relation = []
     for j in range(ngen):
       coeff = capply(FZ_coeff,j,FZ_param,g,r,markings,moduli_type)
       if coeff != 0:
         relation.append([j,coeff])
     relations.append(relation)
+  dlog('debug','recursive_betti2(%s,%s,%s,%s,%s): %s possibly_new rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
+  relations += interior_derived_rels(g,r,n,moduli_type,True)
   dlog('debug','recursive_betti2(%s,%s,%s,%s,%s): %s interior rels',p,g,r,markings,mod_type_string(moduli_type),len(relations))
   if moduli_type > MODULI_SM:
     for r0 in range(1,r):
@@ -214,6 +251,7 @@ def recursive_betti2(p,g,r,markings=(),moduli_type=MODULI_ST):
 
   nrels = len(relations)
   if nrels == 0:
+    fix_globals()
     return ngen
   if p > 0:
     KK = FiniteField(p)
@@ -228,9 +266,10 @@ def recursive_betti2(p,g,r,markings=(),moduli_type=MODULI_ST):
         D[i,x[0]] = y
   rank = compute_rank_sparse2(D,nrels,ngen)
 
+  fix_globals()
   return ngen - rank
 
-def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
+def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST,special_top=False):
   if r == 0:
     return []
   answer = []
@@ -241,7 +280,7 @@ def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
         for vec in subsequences(range(1,n+1),n-n0):
           rel2 = copy(rel)
           for i in range(n-n0):
-            rel2 = insertion_pullback(rel2,g,r,n0+i,vec[i],moduli_type)
+            rel2 = insertion_pullback(rel2,g,r,n0+i,vec[i],moduli_type,special_top)
           answer.append(rel2)
     else:
       basic_rels = capply(choose_basic_rels,g,r,n0,MODULI_SMALL)
@@ -251,16 +290,16 @@ def pullback_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
           for vec2 in subsequences(range(1,n+1),n-n0-k+1):
             rel2 = copy(rel)
             for i in range(k-1):
-              rel2 = insertion_pullback(rel2,g,r,n0+i,vec[i],MODULI_SMALL)
-            rel2 = insertion_pullback2(rel2,g,r,n0+k-1,vec2[0],moduli_type)
+              rel2 = insertion_pullback(rel2,g,r,n0+i,vec[i],MODULI_SMALL,special_top)
+            rel2 = insertion_pullback2(rel2,g,r,n0+k-1,vec2[0],moduli_type,special_top)
             for i in range(n-n0-k):
-              rel2 = insertion_pullback(rel2,g,r,n0+k+i,vec2[i+1],moduli_type)
+              rel2 = insertion_pullback(rel2,g,r,n0+k+i,vec2[i+1],moduli_type,special_top)
             answer.append(rel2)
   return answer
 
-def interior_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
+def interior_derived_rels(g,r,n=0,moduli_type=MODULI_ST,special_top=False):
   markings = tuple(range(1,n+1))
-  answer = copy(capply(pullback_derived_rels,g,r,n,moduli_type))
+  answer = copy(capply(pullback_derived_rels,g,r,n,moduli_type,special_top))
   for r0 in range(r):
     pullback_rels = copy(capply(choose_basic_rels,g,r0,n,moduli_type))
     pullback_rels += capply(pullback_derived_rels,g,r0,n,moduli_type)
@@ -272,10 +311,10 @@ def interior_derived_rels(g,r,n=0,moduli_type=MODULI_ST):
             rcur = r0
             for m in range(n):
               for mm in range(tau[m]):
-                rel2 = psi_multiple(rel2,m+1,g,rcur,n,moduli_type)
+                rel2 = psi_multiple(rel2,m+1,g,rcur,n,moduli_type,special_top)
                 rcur += 1
             for m in sigma:
-              rel2 = kappa_multiple(rel2,m,g,rcur,n,moduli_type)
+              rel2 = kappa_multiple(rel2,m,g,rcur,n,moduli_type,special_top)
               rcur += m
             answer.append(rel2)
   return answer

@@ -583,7 +583,10 @@ def strata_invariant_lookup(g,r,markings=(),moduli_type=MODULI_ST):
     inv_dict[L[i].invariant].append(i)
   return inv_dict
 
-def num_of_stratum(G,g,r,markings=(),moduli_type=MODULI_ST):
+def num_of_stratum(G,g,r,markings=(),moduli_type=MODULI_ST,special_top=False):
+  if special_top:
+    if g == TOP_g and r == TOP_r and markings == TOP_markings and moduli_type == TOP_moduli_type:
+      return special_num_of_stratum(G,g,r,markings,moduli_type)
   G.compute_invariant()
   L = capply(all_strata,g,r,markings,moduli_type)
   x = capply(strata_invariant_lookup,g,r,markings,moduli_type)[G.invariant]
@@ -595,3 +598,15 @@ def num_of_stratum(G,g,r,markings=(),moduli_type=MODULI_ST):
   print "ERROR"
   print (g,r,markings,moduli_type)
   print G.M
+
+def special_num_of_stratum(G,g,r,markings=(),moduli_type=MODULI_ST):
+  if markings == tuple([i+1 for i in range(len(TOP_new_markings))]):
+    new_markings = TOP_new_markings
+  else:
+    print "ERROR"
+    return "ERROR"
+  GG = Graph(G.M)
+  for i in range(1,GG.M.ncols()):
+    if GG.M[0,i][0] > 0:
+      GG.M[0,i] = R(new_markings[GG.M[0,i][0]-1])
+  return num_of_stratum(GG,g,r,new_markings,moduli_type)
