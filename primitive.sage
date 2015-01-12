@@ -197,7 +197,6 @@ def recursive_betti2(p,g,r,markings=(),moduli_type=MODULI_ST):
           good = False
     if not good:
       continue
-    print FZ_param
     relation = []
     for j in range(ngen):
       coeff = capply(FZ_coeff,j,FZ_param,g,r,markings,moduli_type)
