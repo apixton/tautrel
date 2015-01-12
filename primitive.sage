@@ -142,6 +142,13 @@ def recursive_betti(p,g,r,markings=(),moduli_type=MODULI_ST):
     return ngen
   if p > 0:
     KK = FiniteField(p)
+    M = Matrix(KK,nrels,ngen,sparse=True)
+    for i in range(nrels):
+      for x in relations[i]:
+        y = KK(x[1])
+        if y != 0:
+          M[i,x[0]] = y
+    return ngen - M.rank()
   else:
     KK = QQ
 
@@ -254,6 +261,14 @@ def recursive_betti2(p,g,r,markings=(),moduli_type=MODULI_ST):
     return ngen
   if p > 0:
     KK = FiniteField(p)
+    M = Matrix(KK,nrels,ngen,sparse=True)
+    for i in range(nrels):
+      for x in relations[i]:
+        y = KK(x[1])
+        if y != 0:
+          M[i,x[0]] = y
+    fix_globals()
+    return ngen - M.rank()
   else:
     KK = QQ
 
