@@ -42,11 +42,15 @@ def dict_one():
   D[()] = 1
   return D
 
-def dict_exp_A(max_deg):
+def dict_exp_A(max_deg, chosen_field):
   D = dict_one()
+  D[()] = chosen_field(1)
   final_D = dict_one()
+  final_D[()] = chosen_field(1)
   L = [-A_list(n) for n in range(max_deg+1)]
   L[0] = 0
+  for n in range(max_deg+1):
+    L[n] = chosen_field(L[n])
   for d in range(1,max_deg+1):
     D = dict_mult(D,L,max_deg)
     for key,val in D.iteritems():
@@ -62,7 +66,7 @@ def dict_eval(D,sigma,g,num_ones):
       ans += D[newsigma]*binomial(2*g-2+len(newsigma)-1,i)*factorial(i)
   return ans
 
-def tree_coeffs(g,d,rel_list,cur_sigma,D):
+def tree_coeffs(g,d,rel_list,cur_sigma,D,chosen_field):
   s = sum(cur_sigma)
   if ((s + g + d + 1) % 2) == 0:
     num_ones = sum(1 for i in cur_sigma if i == 1)
@@ -78,8 +82,8 @@ def tree_coeffs(g,d,rel_list,cur_sigma,D):
   for m in range(1,maxm+1):
     if (m % 3) == 2:
       continue
-    L = [C_coeff(m,n) for n in range(d+1)]
-    tree_coeffs(g,d,rel_list,cur_sigma+[m],dict_mult(D,L,d))
+    L = [chosen_field(C_coeff(m,n)) for n in range(d+1)]
+    tree_coeffs(g,d,rel_list,cur_sigma+[m],dict_mult(D,L,d),chosen_field)
 
 def mg_relcount(g,d):
   if 3*d-g-1 < 0:
@@ -102,14 +106,12 @@ def betti_mg(g,d,p=0):
     return Partitions(d).cardinality()
   dlog('debug','computing %s rels in betti_mg(%s,%s)',mg_relcount(g,d),g,d)
   rel_list = []
-  D = dict_exp_A(d)
-  tree_coeffs(g,d,rel_list,[],D)
-
   if p > 0:
     KK = FiniteField(p)
-    for rel in rel_list:
-      for i in range(len(rel)):
-        rel[i] = KK(rel[i])
+  else:
+    KK = QQ
+  D = dict_exp_A(d,KK)
+  tree_coeffs(g,d,rel_list,[],D,KK)
 
   row_order,col_order = choose_orders(rel_list)
   return (len(rel_list[0]) - compute_rank2(rel_list,row_order,col_order))
