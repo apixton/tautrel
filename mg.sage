@@ -70,6 +70,8 @@ def tree_coeffs(g,d,rel_list,cur_sigma,D):
     for tau in Partitions(d):
       vec.append(dict_eval(D,list(tau),g,num_ones))
     rel_list.append(vec)
+    if (len(rel_list) % 100) == 0:
+      dlog('debug','%s rels computed in betti_mg(%s,%s)',len(rel_list),g,d)
   maxm = 3*d-g-1-s
   if len(cur_sigma) > 0 and maxm > cur_sigma[-1]:
     maxm = cur_sigma[-1]
@@ -79,11 +81,26 @@ def tree_coeffs(g,d,rel_list,cur_sigma,D):
     L = [C_coeff(m,n) for n in range(d+1)]
     tree_coeffs(g,d,rel_list,cur_sigma+[m],dict_mult(D,L,d))
 
+def mg_relcount(g,d):
+  if 3*d-g-1 < 0:
+    return 0
+  count = 0
+  for sigma in Partitions(3*d-g-1):
+    good = True
+    for part in sigma:
+      if part > 2 and ((part % 3) == 2):
+        good = False
+        break
+    if good:
+      count += 1
+  return count
+
 def betti_mg(g,d,p=0):
   if d > g-2:
     return 0
   if 3*d < g+1:
     return Partitions(d).cardinality()
+  dlog('debug','computing %s rels in betti_mg(%s,%s)',mg_relcount(g,d),g,d)
   rel_list = []
   D = dict_exp_A(d)
   tree_coeffs(g,d,rel_list,[],D)
