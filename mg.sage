@@ -114,5 +114,13 @@ def betti_mg(g,d,p=0):
   row_order,col_order = choose_orders(rel_list)
   return (len(rel_list[0]) - compute_rank2(rel_list,row_order,col_order))
 
+def syz_mg(g,d,p=0):
+  predicted_rank = Partitions(d).cardinality() - mg_relcount(g,d)
+  actual_rank = betti_mg(g,d,p)
+  return actual_rank - predicted_rank
+
 def compute_betti_mg(g,r,p=0):
   ans = log_func(betti_mg,g,r,p)
+
+def compute_syz_mg(g,r,p=0):
+  ans = log_func(syz_mg,g,r,p)
