@@ -22,12 +22,11 @@ def C_coeff(m,term):
 
 def dict_mult(D,L,max_deg):
   DD = {}
-  for i in range(max_deg+1):
-    if L[i] == 0:
-      continue
-    for sigma,coeff in D.iteritems():
+  L_indices = [i for i in range(max_deg+1) if L[i] != 0]
+  for sigma,coeff in D.iteritems():
+    for i in L_indices:
       if base.sum(sigma)+i > max_deg:
-        continue
+        break
       newsigma = list(sigma) + [i]
       newsigma.sort()
       newsigma = tuple(newsigma)
@@ -113,8 +112,11 @@ def betti_mg(g,d,p=0):
   D = dict_exp_A(d,KK)
   tree_coeffs(g,d,rel_list,[],D,KK)
 
-  row_order,col_order = choose_orders(rel_list)
-  return (len(rel_list[0]) - compute_rank2(rel_list,row_order,col_order))
+  dlog('debug','computing rank in betti_mg(%s,%s,%s)',g,d,p)
+  M = Matrix(KK,rel_list)
+  return M.ncols() - M.rank()
+  #row_order,col_order = choose_orders(rel_list)
+  #return (len(rel_list[0]) - compute_rank2(rel_list,row_order,col_order))
 
 def syz_mg(g,d,p=0):
   predicted_rank = Partitions(d).cardinality() - mg_relcount(g,d)
