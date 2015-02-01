@@ -76,13 +76,37 @@ def tree_coeffs(g,d,rel_list,cur_sigma,D,chosen_field):
     if (len(rel_list) % 100) == 0:
       dlog('debug','%s rels computed in betti_mg(%s,%s)',len(rel_list),g,d)
   maxm = 3*d-g-1-s
-  if len(cur_sigma) > 0 and maxm > cur_sigma[-1]:
-    maxm = cur_sigma[-1]
-  for m in range(1,maxm+1):
+  if len(cur_sigma) > 0:
+    minm = cur_sigma[-1]
+  else:
+    minm = 1
+  for m in range(maxm,minm-1,-1):
     if (m % 3) == 2:
       continue
     L = [chosen_field(C_coeff(m,n)) for n in range(d+1)]
     tree_coeffs(g,d,rel_list,cur_sigma+[m],dict_mult(D,L,d),chosen_field)
+
+def pnum(n,l):
+  return Partitions(n,min_length=l).cardinality()
+
+def sim_tree_coeffs(g,d,count_holder,cur_sigma):
+  s = sum(cur_sigma)
+  maxm = 3*d-g-1-s
+  if len(cur_sigma) > 0:
+    minm = cur_sigma[-1]
+  else:
+    minm = 1
+  for m in range(maxm,minm-1,-1):
+    if (m % 3) == 2:
+      continue
+    L = [QQ(C_coeff(m,n)) for n in range(d+1)]
+    num_ones = sum(1 for i in cur_sigma if i == 1)
+    for i in range(d+1):
+      if L[i] != 0:
+        for j in range(d-i+1):
+          for k in range(num_ones + 1):
+            count_holder[0] += capply(pnum,j,len(cur_sigma)-k)
+    sim_tree_coeffs(g,d,count_holder,cur_sigma+[m])
 
 def mg_relcount(g,d):
   if 3*d-g-1 < 0:
