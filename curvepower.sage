@@ -704,3 +704,64 @@ def para_gorenstein_C(g,r1,n=0):
 
   # compute rank; maybe should do this in a different way at some point.
   return matrix(M).rank()
+
+########################### some M_{g,n} code
+
+def all_strata_smooth(r,marktuple=()):
+  markings = list(marktuple)
+  n = len(markings)
+  big_list = []
+  block_sizes = []
+  last = 0
+  for i in range(1,n):
+    if markings[i] != markings[last]:
+      block_sizes.append(i - last)
+      last = i
+  if last < n:
+    block_sizes.append(n-last)
+  for deg_vec in IntegerVectors(r, 1+len(block_sizes)):
+    S_list = [Partitions(deg_vec[0])]
+    for i in range(len(block_sizes)):
+      S_list.append(Partitions(deg_vec[i+1] + block_sizes[i], length=block_sizes[i]))
+    for S in CartesianProduct(*S_list):
+      stratum = [list(S[0]),[]]
+      count = 0
+      for i in range(len(block_sizes)):
+        for j in range(block_sizes[i]):
+          stratum[1].append([marktuple[count],S[i+1][block_sizes[i]-1-j]-1])
+          count += 1
+      big_list.append(stratum)
+  return big_list
+
+# mostly a copy of RTsum from gorenstein.sage
+def RTsocle(psi_list,kappa_list):
+  g = sum(kappa_list) + sum(psi_list) + 2 - len(psi_list)
+  kappalist = list(kappa_list)
+  psilist = list(psi_list)
+  kappalist.sort()
+  psilist.sort()
+  total = 0
+  for i in setparts_with_auts(kappalist):
+    total += (-1)^(len(i[0])) * i[1] * multi2(g, [1+sum(j) for j in i[0]] + psilist)
+  return total*(-1)^(len(kappalist))
+
+# assumes markings are distinct
+def pairing_smooth(gen1,gen2,i):
+  kappa_list = gen1[0] + gen2[0]
+  psi_list = []
+  for j in range(len(gen1[1])):
+    if gen1[1][j][0] == i:
+      psi_list.append(gen1[1][j][1] + gen2[1][j][1])
+    else:
+      psi_list.append(gen1[1][j][1] + gen2[1][j][1] + 1)
+  return capply(RTsocle,tuple(psi_list),tuple(kappa_list))
+
+def smooth_gor_betti(g,r,n):
+  L1 = all_strata_smooth(r,tuple(range(1,n+1)))
+  L2 = all_strata_smooth(g-1-r,tuple(range(1,n+1)))
+  M = Matrix(QQ,len(L1),n*len(L2))
+  for i in range(len(L1)):
+    for j in range(len(L2)):
+      for k in range(n):
+        M[i,n*j+k] = pairing_smooth(L1[i],L2[j],k+1)
+  return M.rank()
