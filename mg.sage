@@ -36,6 +36,31 @@ def dict_mult(D,L,max_deg):
         DD[newsigma] += L[i]*coeff
   return DD
 
+# multiplication by kappa_i in the psi-pushforward basis
+def dict_kappa_mult(D,i):
+  DD = {}
+  for sigma,coeff in D.iteritems():
+    newsigma = list(sigma) + [i]
+    newsigma.sort()
+    newsigma = tuple(newsigma)
+    if not DD.has_key(newsigma):
+      DD[newsigma] = coeff
+    else:
+      DD[newsigma] += coeff
+    for j in range(len(sigma)):
+      if j > 0 and sigma[j] == sigma[j-1]:
+        DD[newsigma] -= coeff
+        continue
+      newsigma = list(sigma)
+      newsigma[j] += i
+      newsigma.sort()
+      newsigma = tuple(newsigma)
+      if not DD.has_key(newsigma):
+        DD[newsigma] = -coeff
+      else:
+        DD[newsigma] -= coeff
+  return DD
+
 def dict_one():
   D = {}
   D[()] = 1
@@ -56,6 +81,33 @@ def dict_exp_A(max_deg, chosen_field):
       final_D[key] = val/factorial(d)
   return final_D
 
+def dict_max_truncate(D,max):
+  for sigma in D.keys():
+    if base.sum(sigma) > max:
+      del D[sigma]
+
+def dict_parity_truncate(D,min,parity):
+  for sigma in D.keys():
+    s = base.sum(sigma)
+    if s < min or (s % 2) != parity:
+      del D[sigma]
+
+def dict_simplify(D,g):
+  for sigma in D.keys(): 
+    count = 0
+    for i in sigma:
+      if i > 0:
+        break
+      count += 1
+    if count > 0:
+      newsigma = sigma[count:]
+      val = D[sigma]*binomial(2*g-2+len(sigma)-1,count)*factorial(count)
+      if not D.has_key(newsigma):
+        D[newsigma] = val
+      else:
+        D[newsigma] += val
+      del D[sigma]
+
 def dict_eval(D,sigma,g,num_ones):
   ans = 0
   sorted_sigma = sorted(sigma)
@@ -64,6 +116,51 @@ def dict_eval(D,sigma,g,num_ones):
     if D.has_key(newsigma):
       ans += D[newsigma]*binomial(2*g-2+len(newsigma)-1,i)*factorial(i)
   return ans
+
+def tree_coeffs3(g,d,m,rel_list,min_part,D,chosen_field):
+  if (m % 2) == 0:
+    vec = []
+    for tau in Partitions(d):
+      sorted_tau = tuple(sorted(tau))
+      if D.has_key(sorted_tau):
+        vec.append(D[sorted_tau])
+      else:
+        vec.append(chosen_field.zero())
+    rel_list.append(vec)
+    if (len(rel_list) % 100) == 0:
+      dlog('debug','%s rels computed in betti_mg(%s,%s)',len(rel_list),g,d)
+  for i in range(min_part,floor(m/3)+1):
+    dict_max_truncate(D,d-i)
+    tree_coeffs3(g,d,m-3*i,rel_list,i,dict_kappa_mult(D,i),chosen_field)
+
+def tree_coeffs2(g,d,rel_list,cur_sigma,D,chosen_field):
+  s = sum(cur_sigma)
+  maxm = 3*d-g-1-s
+  if len(cur_sigma) > 0:
+    minm = cur_sigma[-1]
+  else:
+    minm = 1
+  for m in range(maxm,minm-1,-1):
+    if (m % 3) != 1:
+      continue
+    L = [chosen_field(C_coeff(m,n)) for n in range(d+1)]
+    tree_coeffs2(g,d,rel_list,cur_sigma+[m],dict_mult(D,L,d),chosen_field)
+  if maxm == 1:
+    return
+  if maxm < 5 and (maxm % 2) == 0:
+    num_ones = sum(1 for i in cur_sigma if i == 1)
+    vec = []
+    for tau in Partitions(d):
+      vec.append(dict_eval(D,list(tau),g,num_ones))
+    rel_list.append(vec)
+    if (len(rel_list) % 100) == 0:
+      dlog('debug','%s rels computed in betti_mg(%s,%s)',len(rel_list),g,d)
+    return
+  e = floor(maxm/3)
+  mind = max(0,d-e)
+  dict_parity_truncate(D,mind,(d-maxm)%2)
+  dict_simplify(D,g)
+  tree_coeffs3(g,d,maxm,rel_list,1,D,chosen_field)
 
 def tree_coeffs(g,d,rel_list,cur_sigma,D,chosen_field):
   s = sum(cur_sigma)
@@ -134,7 +231,7 @@ def betti_mg(g,d,p=0):
   else:
     KK = QQ
   D = dict_exp_A(d,KK)
-  tree_coeffs(g,d,rel_list,[],D,KK)
+  tree_coeffs2(g,d,rel_list,[],D,KK)
 
   dlog('debug','computing rank in betti_mg(%s,%s,%s)',g,d,p)
   M = Matrix(KK,rel_list)
