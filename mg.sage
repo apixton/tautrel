@@ -117,7 +117,7 @@ def dict_eval(D,sigma,g,num_ones):
       ans += D[newsigma]*binomial(2*g-2+len(newsigma)-1,i)*factorial(i)
   return ans
 
-def tree_coeffs3(g,d,m,rel_list,min_part,D,chosen_field):
+def tree_coeffs3(g,d,m,rel_matrix,rows_written,min_part,D,chosen_field):
   if (m % 2) == 0:
     vec = []
     for tau in Partitions(d):
@@ -126,14 +126,17 @@ def tree_coeffs3(g,d,m,rel_list,min_part,D,chosen_field):
         vec.append(D[sorted_tau])
       else:
         vec.append(chosen_field.zero())
-    rel_list.append(vec)
-    if (len(rel_list) % 100) == 0:
-      dlog('debug','%s rels computed in betti_mg(%s,%s)',len(rel_list),g,d)
+    i = rows_written[0]
+    for j in range(len(vec)):
+      rel_matrix[i,j] = vec[j]
+    rows_written[0] += 1
+    if (rows_written[0] % 100) == 0:
+      dlog('debug','%s rels computed in betti_mg(%s,%s)',rows_written[0],g,d)
   for i in range(min_part,floor(m/3)+1):
     dict_max_truncate(D,d-i)
-    tree_coeffs3(g,d,m-3*i,rel_list,i,dict_kappa_mult(D,i),chosen_field)
+    tree_coeffs3(g,d,m-3*i,rel_matrix,rows_written,i,dict_kappa_mult(D,i),chosen_field)
 
-def tree_coeffs2(g,d,rel_list,cur_sigma,D,chosen_field):
+def tree_coeffs2(g,d,rel_matrix,rows_written,cur_sigma,D,chosen_field):
   s = sum(cur_sigma)
   maxm = 3*d-g-1-s
   if len(cur_sigma) > 0:
@@ -144,7 +147,7 @@ def tree_coeffs2(g,d,rel_list,cur_sigma,D,chosen_field):
     if (m % 3) != 1:
       continue
     L = [chosen_field(C_coeff(m,n)) for n in range(d+1)]
-    tree_coeffs2(g,d,rel_list,cur_sigma+[m],dict_mult(D,L,d),chosen_field)
+    tree_coeffs2(g,d,rel_matrix,rows_written,cur_sigma+[m],dict_mult(D,L,d),chosen_field)
   if maxm == 1:
     return
   if maxm < 5 and (maxm % 2) == 0:
@@ -152,15 +155,18 @@ def tree_coeffs2(g,d,rel_list,cur_sigma,D,chosen_field):
     vec = []
     for tau in Partitions(d):
       vec.append(dict_eval(D,list(tau),g,num_ones))
-    rel_list.append(vec)
-    if (len(rel_list) % 100) == 0:
-      dlog('debug','%s rels computed in betti_mg(%s,%s)',len(rel_list),g,d)
+    i = rows_written[0]
+    for j in range(len(vec)):
+      rel_matrix[i,j] = vec[j]
+    rows_written[0] += 1
+    if (rows_written[0] % 100) == 0:
+      dlog('debug','%s rels computed in betti_mg(%s,%s)',rows_written[0],g,d)
     return
   e = floor(maxm/3)
   mind = max(0,d-e)
   dict_parity_truncate(D,mind,(d-maxm)%2)
   dict_simplify(D,g)
-  tree_coeffs3(g,d,maxm,rel_list,1,D,chosen_field)
+  tree_coeffs3(g,d,maxm,rel_matrix,rows_written,1,D,chosen_field)
 
 def tree_coeffs(g,d,rel_list,cur_sigma,D,chosen_field):
   s = sum(cur_sigma)
@@ -224,20 +230,19 @@ def betti_mg(g,d,p=0):
     return 0
   if 3*d < g+1:
     return Partitions(d).cardinality()
-  dlog('debug','computing %s rels in betti_mg(%s,%s)',mg_relcount(g,d),g,d)
-  rel_list = []
   if p > 0:
     KK = FiniteField(p)
   else:
     KK = QQ
+  nrows = mg_relcount(g,d)
+  ncols = Partitions(d).cardinality()
+  dlog('debug','computing %s rels in betti_mg(%s,%s)',mg_relcount(g,d),g,d)
+  M = Matrix(KK,nrows,ncols)
   D = dict_exp_A(d,KK)
-  tree_coeffs2(g,d,rel_list,[],D,KK)
+  tree_coeffs2(g,d,M,[0],[],D,KK)
 
   dlog('debug','computing rank in betti_mg(%s,%s,%s)',g,d,p)
-  M = Matrix(KK,rel_list)
-  return M.ncols() - M.rank()
-  #row_order,col_order = choose_orders(rel_list)
-  #return (len(rel_list[0]) - compute_rank2(rel_list,row_order,col_order))
+  return ncols - M.rank()
 
 def syz_mg(g,d,p=0):
   predicted_rank = Partitions(d).cardinality() - mg_relcount(g,d)
